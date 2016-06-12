@@ -1,0 +1,59 @@
+# project
+*.log
+*.json
+**/node_modules
+
+# osx
+*DS_Store
+*.DS_Store
+.DS_Strore?
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# windows
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+ehthumbs.db
+Icon?
+Thumbs.db
+*.com
+*.dll
+*.exe
+
+# development: vi/vim
+*.swp
+
+# development: emacs
+*~
+\#*
+.\#*
+
+# sublime
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+*.sublime-workspace
+
+# textmate
+*.tmproj
+*.tmproject
+tmtags
