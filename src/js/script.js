@@ -227,12 +227,14 @@ Quotes = {
 		var self = this;
 		var index = Math.max(self._playedQuotesIndex + offset, 0);
 		var quote = self._playedQuotes[index];
-		while (!quote) {
-			var pickedQuote = self.pickRandomQuote();
-			if (pickedQuote) {
-				self._playedQuotes.push(pickedQuote);
+		if (self.size() > 0) {
+			while (!quote) {
+				var pickedQuote = self.pickRandomQuote();
+				if (pickedQuote) {
+					self._playedQuotes.push(pickedQuote);
+				}
+				quote = self._playedQuotes[index];
 			}
-			quote = self._playedQuotes[index];
 		}
 		self._playedQuotesIndex = index;
 		return quote;
@@ -592,34 +594,38 @@ Quotes = {
 	},
 	append: function(quote, request, response) {
 		var self = this;
-		var container = $('#quotes');
-		var node = $('<li class="quote"></li>');
-		self.appendQuote(quote, node);
-		container.append(node);
+		if (quote) {
+			var container = $('#quotes');
+			var node = $('<li class="quote"></li>');
+			self.appendQuote(quote, node);
+			container.append(node);
+		}
 	},
 	appendQuote: function(quote, jqNode) {
 		var self = this;
-		if (quote['quote']) {
-			var nodeQuote = $('<q class="quote-text">' + quote['quote'] + '</q>');
-			self.editable(nodeQuote);
-			jqNode.append(nodeQuote);
-		} 
-		if (quote['author']) {
-			var nodeAuthor = $('<span class="quote-author">' + quote['author'] + '</span>');
-			self.editable(nodeAuthor);
-			jqNode.append(nodeAuthor);
-		}
-		if (quote['keywords'] && quote['keywords'].length > 0) {
-			var keywords = $('<div class="quote-keywords">');
-			$(quote['keywords']).each(function(index, each) {
-				keywords.append($('<span class="quote-keyword">' + each + '</span>'))
-			})
-			jqNode.append(keywords);
-		}
-		if (quote['source']) {
-			var nodeSource = $('<cite class="quote-source">' + quote['source'] + '</cite>');
-			self.editable(nodeSource);
-			jqNode.append(nodeSource);
+		if (quote) {
+			if (quote['quote']) {
+				var nodeQuote = $('<q class="quote-text">' + quote['quote'] + '</q>');
+				self.editable(nodeQuote);
+				jqNode.append(nodeQuote);
+			} 
+			if (quote['author']) {
+				var nodeAuthor = $('<span class="quote-author">' + quote['author'] + '</span>');
+				self.editable(nodeAuthor);
+				jqNode.append(nodeAuthor);
+			}
+			if (quote['keywords'] && quote['keywords'].length > 0) {
+				var keywords = $('<div class="quote-keywords">');
+				$(quote['keywords']).each(function(index, each) {
+					keywords.append($('<span class="quote-keyword">' + each + '</span>'))
+				})
+				jqNode.append(keywords);
+			}
+			if (quote['source']) {
+				var nodeSource = $('<cite class="quote-source">' + quote['source'] + '</cite>');
+				self.editable(nodeSource);
+				jqNode.append(nodeSource);
+			}
 		}
 	},
 	editable: function(jqNode) {
