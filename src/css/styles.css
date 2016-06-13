@@ -23,6 +23,7 @@ body {
 	margin: 20px 0px 20px 0px;
 	float: left;
     position: relative;
+    width: 100%;
 }
 #search {
 	float: left;
@@ -141,4 +142,51 @@ body {
 #tabs > ul > li {
 	display: inline-block;
 	text-align: center;
+}
+
+.editor,
+.editor:active,
+.editor:focus,
+.editor:hover {
+	display: inline;
+	border: none;
+	outline: none;
+}
+
+.editable {
+	outline: 1px solid transparent;
+	-moz-transition: all 0.25s ease-in;
+    -webkit-transition: all 0.25s ease-in;
+    -o-transition: all 0.25s ease-in;
+    transition: all 0.25s ease-in;
+}
+.success {
+	outline: 1px solid #18c545;
+    -moz-transition: all 0.25s ease-in;
+    -webkit-transition: all 0.25s ease-in;
+    -o-transition: all 0.25s ease-in;
+    transition: all 0.25s ease-in;
+}
+
+.fail {
+	outline: 1px solid red;
+    -moz-transition: all 0.25s ease-in;
+    -webkit-transition: all 0.25s ease-in;
+    -o-transition: all 0.25s ease-in;
+    transition: all 0.25s ease-in;
+}
+
+.dirty {
+	outline: 1px solid orange;
+	-moz-transition: all 0.25s ease-in;
+    -webkit-transition: all 0.25s ease-in;
+    -o-transition: all 0.25s ease-in;
+    transition: all 0.25s ease-in;
+}
+
+#tab-play:after {
+	content: ' || ';
+}
+#tab-play.tab-playing:after {
+	content: ' > ';
 }

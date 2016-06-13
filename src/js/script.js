@@ -3,6 +3,7 @@
 // auto scheduler
 // ----------------------------------------------------
 /*
+
 QuoteSpecification = function(keyedArguments) {
 	url: null,
 	interval: null,
@@ -13,7 +14,14 @@ QuoteSpecification = function(keyedArguments) {
 		}
 	}
 };
+
+// ----------------------------------------------------
+
+TODO:
+- hashing / storage is plain bad 
+
 */
+
 Quotes = {
 	_db: null,
 	_cache: {},
@@ -105,7 +113,7 @@ Quotes = {
 			self.save(null, null);
 		}
 	},
-	changed: function() {
+	changed: function(changes) {
 		var self = this;
 		self._lastChange = (new Date()).getTime();
 		if (self._onChange) {
@@ -208,19 +216,31 @@ Quotes = {
 				if (node.hasClass('tab-resuming')) {
 					node.removeClass('tab-resuming');
 				} else {
-					if (node.hasClass('tab-playing')) {
-						self.stopPlaying();
-					} else {
-						self.startPlaying(true);
-					}	
+					self.togglePlaying(event);
 				}			
 			}
+		});
+		$('#tab-search').on('click.quotes', function(event) {
+			$('#searchText').focus();
 		});
 		$('#nextQuote').on('click.quotes', function(event) {
 			self.showQuote(+1);
 		});
 		$('#previousQuote').on('click.quotes', function(event) {
 			self.showQuote(-1);
+		});
+		$(document).on('keydown.editor', function(event) {
+			if ($('#tab-play').hasClass('tab-active')) {
+				if ($.isKeyEvent(39, event) || $.isKeyEvent(40, event)) { // left, down
+					return self.showQuote(+1);
+				}
+				if ($.isKeyEvent(37, event) || $.isKeyEvent(38, event)) { // right, up
+					return self.showQuote(-1);
+				}
+				if ($.isKeyEvent(32, event)) { // space
+					return self.togglePlaying(event);
+				}
+			}
 		});
 	},
 	pickQuote: function(offset) {
@@ -244,6 +264,22 @@ Quotes = {
 		var keys = Object.keys(self._quotes);
 		return self._quotes[keys[Math.floor(keys.length * Math.random())]];
 	},
+	togglePlaying: function(event) {
+		var self = this;
+		if ($('#tab-play').hasClass('tab-playing')) {
+			self.stopPlaying();
+		} else {
+			self.startPlaying(true);
+		}
+	},
+	resumePlaying: function() {
+		var self = this;
+		if (!self._timerPlayer && $('#tab-play').hasClass('tab-playing')) {
+			self._timerPlayer = window.setTimeout(function() {
+				self.showQuote(+1);
+			}, self._playedIntervall);
+		}
+	},
 	pausePlaying: function() {
 		var self = this;
 		window.clearTimeout(self._timerPlayer);
@@ -266,9 +302,11 @@ Quotes = {
 		window.clearTimeout(self._timerPlayer);
 		self._timerPlayer = null;
 		try {
+			QuotesEditors.detach(null);
 			self.appendQuote(self.pickQuote(offset), $('#quote').empty());
 		} catch (error) {
 			console.log("error playing");
+			console.log(error);
 		}
 		if ($('#tab-play').hasClass('tab-playing')) {
 			self._timerPlayer = window.setTimeout(function() {
@@ -302,7 +340,7 @@ Quotes = {
 					var nodeQuote = $(eachNode);
 					var text = self.normalize(nodeQuote.find('.bqQuoteLink > a').text());
 					var author = self.normalize(nodeQuote.find('.bq-aut > a').text());
-					var keywords = $.grep(nodeQuote.find('.bq_q_nav a').map(function(indexKeywords, eachKeyword) { return self.normalize($(eachKeyword).text()); }), function(eachKeyword) { return eachKeyword && eachKeyword.length > 0; }).sort();
+					var keywords = self.normalizeList(nodeQuote.find('.bq_q_nav a').map(function(indexKeywords, eachKeyword) { return $(eachKeyword).text(); }));
 					self.handle(text, author, keywords, null, 'en', false, request, response);
 				});
 			});
@@ -315,7 +353,7 @@ Quotes = {
 					var nodeAuthor = nodeQuote.next("dd.author");
 					if (nodeAuthor && nodeAuthor[0]) {
 						var author = self.normalize(nodeAuthor.find("b > a").text());
-						var keywords = [ self.normalize(nodeAuthor.find("div.related > a").text()) ];
+						var keywords = self.normalizeList([ nodeAuthor.find("div.related > a").text() ]);
 						self.handle(text, author, keywords, null, 'en', false, request, response);
 					}
 				});
@@ -336,7 +374,7 @@ Quotes = {
 					var rawText = nodeQuote.find('.quoteText').text().match(/\u201C(.*)\u201D/g)[0];
 					var text = self.normalize(rawText.slice(1, rawText.length - 1));
 					var author = self.normalize(nodeQuote.find('.quoteText > a.authorOrTitle').text());
-					var keywords = $.grep(nodeQuote.find('.quoteFooter > div.smallText > a').map(function(indexKeywords, eachKeyword) { return self.normalize($(eachKeyword).text()).capitalize(); }), function(eachKeyword) { return eachKeyword && eachKeyword.length > 0 && eachKeyword.indexOf('no-source') < 0 && eachKeyword.indexOf('attributed') < 0 && eachKeyword.indexOf('Attributed') < 0; }).sort();
+					var keywords = self.normalizeList($.grep(nodeQuote.find('.quoteFooter > div.smallText > a').map(function(indexKeywords, eachKeyword) { return self.normalize($(eachKeyword).text()).capitalize(); }), function(eachKeyword) { return eachKeyword && eachKeyword.length > 0 && eachKeyword.indexOf('no-source') < 0 && eachKeyword.indexOf('attributed') < 0 && eachKeyword.indexOf('Attributed') < 0; }));
 					var source = self.normalize(nodeQuote.find('.quoteText > span > a.authorOrTitle').text());
 					self.handle(text, author, keywords, null, 'en', false, request, response);
 				});
@@ -358,7 +396,7 @@ Quotes = {
 					var nodeQuote = $(eachNode);
 					var text = self.normalize(nodeQuote.find('.stripex > a > p').text());
 					var author = self.normalize(nodeQuote.find('div.authorInLoop > a').text());
-					var keywords = $($.grep($(nodeQuote).attr('class').split(' '), function(className) { return className && className.indexOf('tag-') >= 0; })).map(function(indexClassName, eachClassName) { return self.normalize(eachClassName.replace('tag-', '')).capitalize(); }).toArray();
+					var keywords = self.normalizeList($($.grep($(nodeQuote).attr('class').split(' '), function(className) { return className && className.indexOf('tag-') >= 0; })).map(function(indexClassName, eachClassName) { return self.normalize(eachClassName.replace('tag-', '')).capitalize(); }));
 					self.handle(text, author, keywords, null, 'de', false, request, response);
 				});
 			});
@@ -399,7 +437,7 @@ Quotes = {
 					var nodeQuote = $(eachNode);
 					var text = self.normalize(nodeQuote.find('p.witztext').text());
 					var author = self.normalize(nodeQuote.find('p.autor > a').text());
-					var keywords = $.grep(nodeQuote.find('p.schlagworte > a').map(function(indexKeyword, eachKeyword) { return self.normalize($(eachKeyword).text()); }), function(keyword) { return keyword && keyword.length > 0; }).sort();
+					var keywords = self.normalizeList(nodeQuote.find('p.schlagworte > a').map(function(indexKeyword, eachKeyword) { return $(eachKeyword).text(); }));
 					self.handle(text, author, keywords, null, 'de', false, request, response);
 				});
 			});
@@ -606,43 +644,40 @@ Quotes = {
 		if (quote) {
 			if (quote['quote']) {
 				var nodeQuote = $('<q class="quote-text">' + quote['quote'] + '</q>');
-				self.editable(nodeQuote);
+				self.editable(nodeQuote, new QuotesStringEditor(nodeQuote), quote, 'quote');
 				jqNode.append(nodeQuote);
 			} 
 			if (quote['author']) {
 				var nodeAuthor = $('<span class="quote-author">' + quote['author'] + '</span>');
-				self.editable(nodeAuthor);
+				self.editable(nodeAuthor, new QuotesStringEditor(nodeAuthor), quote, 'author');
 				jqNode.append(nodeAuthor);
 			}
 			if (quote['keywords'] && quote['keywords'].length > 0) {
-				var keywords = $('<div class="quote-keywords">');
+				var nodeKeywords = $('<div class="quote-keywords">');
 				$(quote['keywords']).each(function(index, each) {
-					keywords.append($('<span class="quote-keyword">' + each + '</span>'))
-				})
-				jqNode.append(keywords);
+					nodeKeywords.append($('<span class="quote-keyword">' + each + '</span>'));
+				});
+				self.editable(nodeKeywords, new QuotesListEditor(nodeKeywords, '<span class="quote-keyword">%{text}</span>'), quote, 'keywords');
+				jqNode.append(nodeKeywords);
 			}
 			if (quote['source']) {
 				var nodeSource = $('<cite class="quote-source">' + quote['source'] + '</cite>');
-				self.editable(nodeSource);
+				self.editable(nodeSource, new QuotesStringEditor(nodeSource), quote, 'source');
 				jqNode.append(nodeSource);
 			}
 		}
 	},
-	editable: function(jqNode) {
+	editable: function(jqNode, editor, quote, key) {
 		var self = this;
-		var editor = null;
-		var text = null;
-		$(jqNode).hover(function(event) {
-			text = jqNode.text();
-			editor = $('<div class="editor" contentEditable="true">' + text + '</div>')
-			jqNode.empty().append(editor);
-		}, function(event) {
-			if (editor) {
-				jqNode.empty().text(editor.text());
-				editor = null;
-				text = null;
-			}
+		editor.setUp();
+		// TODO database key !!!!!
+		editor.onSave(function(oldValue, newValue, event) {
+			quote[key] = newValue;
+			quote['timestamp'] = self.timestamp();
+			//self.changed({ 'modify': [ quote ] });
+			return true;
 		});
+		editor.attach();
 	},
 	minimizeRequest: function(request) {
 		var self = this;
@@ -782,6 +817,10 @@ Quotes = {
 				.replace(/^\s+/, '')
 				.replace(/\s+$/, '');
 	},
+	normalizeList: function(list) {
+		var self = this;
+		return $.unique($.grep($(list).map(function(index, each) { return self.normalize(each); }).toArray(), function(each) { return each && each.length > 0; })).sort();
+	},
 	normalizeHtml: function(html) {
 		var self = this;
 		return self.normalize((html || '')
@@ -872,6 +911,15 @@ $.unique = function(list) {
 };
 
 $.isSameArray = function(array1, array2) {
+	if ((!array1 && array2) || (array1 && !array2)) {
+		return false;
+	}
+	if (typeof array1 != typeof array2) {
+		return false;
+	}
+	if (array1 && array2 && array1.length != array2.length) {
+		return false;
+	}
 	for (var object in array1) {
 		if (!$.inArray(object, array2)) {
 			return false;
@@ -885,6 +933,326 @@ $.isSameArray = function(array1, array2) {
 	return true;
 };
 
+$.isKeyEvent = function(charOrNumber, event) {
+	if (event) {
+		if (typeof charOrNumber === 'number') {
+			return (event.which ? event.which : event.keyCode) == charOrNumber;
+		}
+		if (typeof charOrNumber === 'string') {
+			return (event.which ? String.fromCharCode(event.which) : String.fromCharCode(event.keyCode)) == charOrNumber;
+		}
+	}
+	return false;
+};
+
 $(document).ready(function() {
 	Quotes.setup();
+});
+
+// ----------------------------------------------------------------------------
+//
+// quotes editor
+//
+// ----------------------------------------------------------------------------
+
+QuotesEditors = {
+	setup: function() {
+		var self = this;
+		$(document).on('keydown.editor', function(event) {
+			self.abort(event);
+		});
+	},
+	abort: function(event) {
+		var self = this;
+		self.each(function(each) {
+			each.abort(event);
+		});
+	},
+	detach: function(event) {
+		var self = this;
+		self.each(function(each) {
+			each.abort(event);
+			each.detach();
+		});
+	},
+	each: function(callback) {
+		if (callback) {
+			$('.editor').each(function(index, each) {
+				var editor = $(each).parent().data('editor');
+				if (editor) {
+					callback(editor);
+				}
+			});
+		}
+	}
+};
+
+QuotesStringEditor = function(jqNode) {
+	this._node = $(jqNode);
+	this._editor = null;
+	this._text = null;
+	this._timerScheduled = null;
+	this._timerState = null;
+};
+
+QuotesStringEditor.prototype = {
+	setUp: function() {
+		var self = this;
+		self._node.hover(function(event) {
+			window.clearTimeout(self._timerScheduled);
+			self._timerScheduled = null;
+			self.start(event);
+		}, function(event) {
+			self.stopDelayed(event);
+		});
+		self._node.on('keydown.editor', function(event) {
+			if (event.keyCode == 27) {
+				self.abort(event);
+				return false;
+			}
+			if ((event.ctrlKey || event.metaKey) && ($.isKeyEvent('s', event) || $.isKeyEvent('S', event))) {
+				self.save(event);
+				return false;
+			}
+		});
+		self._node.on('keyup.editor', function(event) {
+			if (self.hasChanged()) {
+				self.dirty();
+				Quotes.pausePlaying();
+			} else {
+				self.clean();
+			}
+		});
+		self._node.on('click.editor', function(event) {
+			Quotes.pausePlaying();
+		});
+	},
+	tearDown: function() {
+		var self = this;
+		self._node.off();
+		self.stop();
+	},
+	attach: function() {
+		var self = this;
+		self._node.data('editor', self);
+		self._node.parent().addClass('editable');
+	},
+	detach: function() {
+		var self = this;
+		self._node.parent().removeClass('editable');
+		self._node.data('editor', null);
+	},
+	start: function(event) {
+		var self = this;
+		if (!self.isEditing()) {
+			self._start(event);
+		}
+	},
+	_start: function(event) {
+		var self = this;
+		self.setOriginalText(self._node.text());
+		self._editor = $('<div class="editor" contentEditable="true">' + self.getOriginalText() + '</div>');
+		self._node.empty().append(self._editor);
+	},
+	stop: function(event) {
+		var self = this;
+		if (self.isEditing() && !self.hasChanged()) {
+			self._stop(event);
+			self.clean();
+			Quotes.resumePlaying();
+		}
+	},
+	_stop: function(event) {
+		var self = this;
+		self._node.empty().text(self.getCurrentText());
+		self._editor = null;
+		self.setOriginalText(null);
+	},
+	stopDelayed: function(event) {
+		var self = this;
+		window.clearTimeout(self._timerScheduled);
+		self._timerScheduled = window.setTimeout(function() {
+			self._timerScheduled = null;
+			self.stop(event);
+		}, 2000);
+	},
+	abort: function(event) {
+		var self = this;
+		if (self.isEditing()) {
+			self._abort(event);
+			self.clean();
+			Quotes.resumePlaying();
+		}
+	},
+	_abort: function(event) {
+		var self = this;
+		self._node.empty().text(self.getOriginalText());
+		self._editor = null;
+		self.setOriginalText(null);
+	},
+	save: function(event) {
+		var self = this;
+		if (self.isEditing()) { 
+			if (self._onSave) {
+				if (self.hasChanged()) {
+					try {		
+						self._save(event);
+						self.clean();
+						Quotes.resumePlaying();
+					} catch (error) {
+						self.fail();
+					}
+				}
+			}
+		}
+	},
+	_save: function() {
+		var self = this;
+		if (self._onSave(self.getOriginalText(), self.getCurrentText(), event)) {
+			self.setOriginalText(self.getCurrentText());
+			self.success();
+		} else {
+			self.abort();
+			self.fail();
+		}
+	},
+	isEditing: function() {
+		var self = this;
+		return !!self._editor;
+	},
+	hasChanged: function() {
+		var self = this;
+		return self.isEditing() && self.getOriginalText() != self.getCurrentText();
+	},
+	getOriginalText: function() {
+		var self = this;
+		return self._text;
+	},
+	setOriginalText: function(text) {
+		var self = this;
+		self._text = text;
+	},
+	getCurrentText: function() {
+		var self = this;
+		return Quotes.normalize(self._editor.text());
+	},
+	onSave: function(callback) {
+		var self = this;
+		self._onSave = callback;
+	},
+	success: function() {
+		var self = this;
+		self._node.removeClass('fail').addClass('success');
+		window.clearTimeout(self._timerState);
+		self._timerState = window.setTimeout(function() {
+			self._node.removeClass('success');
+		}, 500);
+	},
+	fail: function() {
+		var self = this;
+		self._node.removeClass('success').addClass('fail');
+		window.clearTimeout(self._timerState);
+		self._timerState = window.setTimeout(function() {
+			self._node.removeClass('fail');
+		}, 500);
+	},
+	dirty: function() {
+		var self = this;
+		self._node.addClass('dirty');
+	},
+	clean: function() {
+		var self = this;
+		self._node.removeClass('dirty');
+	}
+};
+
+QuotesListEditor = function(jqNode, htmlTemplate) {
+	this._node = $(jqNode);
+	this._htmlTemplate = htmlTemplate;
+	this._editor = null;
+	this._html = null;
+	this._text = null;
+	this._list = null,
+	this._timerScheduled = null;
+	this._timerState = null;
+};
+
+QuotesListEditor.prototype = {};
+$.extend(QuotesListEditor.prototype, QuotesStringEditor.prototype, {
+	_start: function(event) {
+		var self = this;
+		self.setOriginalHtml(self._node.html());
+		self._editor = $('<div class="editor" contentEditable="true">' + self.getOriginalText() + '</div>');
+		self._node.empty().append(self._editor);
+	},
+	_stop: function(event) {
+		var self = this;
+		self._node.empty().html(self.getCurrentHtml());
+		self._editor = null;
+		self.setOriginalHtml(null);
+	},
+	_abort: function(event) {
+		var self = this;
+		self._node.empty().html(self.getOriginalHtml());
+		self._editor = null;
+		self.setOriginalHtml(null);
+	},
+	_save: function() {
+		var self = this;
+		self._onSave(self.getOriginalList(), self.getCurrentList(), event);
+		self.setOriginalHtml(self.getCurrentHtml());
+	},
+	hasChanged: function() {
+		var self = this;
+		return self.isEditing() && !$.isSameArray(self.getOriginalList(), self.getCurrentList());
+	},
+	getOriginalText: function() {
+		var self = this;
+		return self._text;
+	},
+	getOriginalHtml: function() {
+		var self = this;
+		return self._html;
+	},
+	getOriginalList: function() {
+		var self = this;
+		return self._list;
+	},
+	setOriginalHtml: function(html) {
+		var self = this;
+		self._html = html;
+		if (html) {
+			self._list = Quotes.normalizeList($(html).map(function(indexItem, eachItem) { return $(eachItem).text(); }).toArray());
+			self._text = self.concat(self._list);
+		} else {
+			self._list = null;
+			self._text = null;
+		}
+	},
+	getCurrentText: function() {
+		var self = this;
+		return self.concat(self.getCurrentList());
+	},
+	getCurrentHtml: function() {
+		var self = this;
+		return self.concat(self.getCurrentList(), self._htmlTemplate);
+	},
+	getCurrentList: function() {
+		var self = this;
+		return Quotes.normalizeList(self.split(self._editor.text()));
+	},
+	split: function(text) {
+		return (text || '').split(/[.,;\/\s+]/g);
+	},
+	concat: function(list, template) {
+		var text = '';
+		$(list).each(function(index, each) {
+			if (template) {
+				text = text + (template + '').replace('%{text}', each);
+			} else {
+				text = text + (index > 0 ? ', ' : '') + each;
+			}
+		});
+		return text;
+	}
 });
