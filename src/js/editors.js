@@ -1,7 +1,7 @@
 QuotesEditors = {
 	setup: function() {
 		var self = this;
-		$(document).on('keydown.editor', function(event) {
+		$(document).on('keydown.globaleditor', function(event) {
 			self.abort(event);
 		});
 	},

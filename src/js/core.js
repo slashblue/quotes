@@ -5,30 +5,30 @@ Quotes = {
 	_timerPlayer: null,
 	setUp: function() {
 		var self = this;
-		QuotesData.onChange(function() {
+		QuotesData.onChange(function(event) {
 			self.updateStats();
 		});
-		QuotesData.onAfterLoad(function() {
+		QuotesData.onAfterLoad(function(event) {
 			self.updateStats();
-			self.startPlaying();
 		});
 		QuotesData.setUp();
+		
 		QuotesFetchers.onHandleQuote(function(quote, request, response) {
 			QuotesData.storeQuote(quote, request, response)
 		});
 		QuotesFetchers.onFetchFinished(function(request, response) {
-			self.save(request, response);
+			QuotesData.save(request, response);
 		});
 		QuotesFetchers.setUp();
-		self.initUI(); // TODO
-	},
-	initUI: function() {
-		var self = this;
+
 		QuotesSearcher.onBeforeSearch(function(event) {
+			QuotesEditors.detach(null);
 			$('#quotes').empty();
 		});
 		QuotesSearcher.onSearch(function(quote, event) {
-			self.append(quote);
+			var node = $('<li class="quote"></li>')
+			self.appendQuote(quote, node);
+			$('#quotes').append(node);
 		});
 		QuotesSearcher.onEmptySearch(function(event){
 			self.updateStats([]);
@@ -38,131 +38,70 @@ Quotes = {
 		});
 		QuotesSearcher.setUp();
 
-		// TODO
+		QuotesPlayer.onPlay(function(event) {
+			$('#tab-play').addClass('tab-playing').removeClass('tab-resuming');
+		});
+		QuotesPlayer.onPause(function(event) {
+			$('#tab-play').removeClass('tab-playing').removeClass('tab-resuming');
+		});
+		QuotesPlayer.onResume(function(event) {
+			$('#tab-play').addClass('tab-resuming');
+		});
+		QuotesPlayer.onSuspend(function(event) {
+			$('#tab-play').removeClass('tab-resuming');
+		});
+		QuotesPlayer.onNext(function(nextQuote, previousQuote, event) {
+			QuotesEditors.detach(null);
+			self.appendQuote(nextQuote, $('#quote').empty());
+		});
+		QuotesPlayer.onPrevious(function(nextQuote, previousQuote, event) {
+			QuotesEditors.detach(null);
+			self.appendQuote(nextQuote, $('#quote').empty());
+		});
+		QuotesPlayer.onReady(function(nextQuote, event){
+			self.appendQuote(nextQuote, $('#quote').empty());
+			if ($('#quote').is(':visible')) {
+				this.play(event);
+			}
+		});
+		QuotesPlayer.setUp();
+		
 		$('.tab').on('click.quotes', function(event) {
 			var tab = $(this);
-			if (!tab.hasClass('tab-active')) {
+			if (tab.hasClass('tab-active')) {
+				// todo
+				if (QuotesPlayer.isSuspended()) {
+					QuotesPlayer.toggle(event);
+				} else {
+					QuotesPlayer.resume(event);
+				}
+			} else {
 				$('.tab').removeClass('tab-active');
 				$('.tab-content').removeClass('tab-content-active');
 				tab.addClass('tab-active');
 				$(tab.attr('href')).addClass('tab-content-active');
-				if (tab.attr('id') != 'tab-play') {
-					tab.removeClass('tab-resuming');
-					self.pausePlaying();
-				} else {
-					tab.addClass('tab-resuming');
-					self.startPlaying();
-				}
+				QuotesPlayer.suspend(event);
 			}
-		});
-		// TODO
-		$('#tab-play').on('click.quotes', function(event) {
-			var node = $(this);
-			if (node.hasClass('tab-active')) {
-				if (node.hasClass('tab-resuming')) {
-					node.removeClass('tab-resuming');
-				} else {
-					self.togglePlaying(event);
-				}			
-			}
-		});
-		
+		});		
 		$('#nextQuote').on('click.quotes', function(event) {
-			self.showQuote(+1);
+			QuotesPlayer.next(event);
 		});
 		$('#previousQuote').on('click.quotes', function(event) {
-			self.showQuote(-1);
+			QuotesPlayer.previous(event);
 		});
 		$(document).on('keydown.editor', function(event) {
 			if ($('#tab-play').hasClass('tab-active')) {
 				if ($.isKeyEvent(39, event) || $.isKeyEvent(40, event)) { // left, down
-					return self.showQuote(+1);
+					return QuotesPlayer.next(event);
 				}
 				if ($.isKeyEvent(37, event) || $.isKeyEvent(38, event)) { // right, up
-					return self.showQuote(-1);
+					return QuotesPlayer.previous(event);
 				}
 				if ($.isKeyEvent(32, event)) { // space
-					return self.togglePlaying(event);
+					return QuotesPlayer.toggle(event);
 				}
 			}
 		});
-	},
-	pickQuote: function(offset) {
-		var self = this;
-		var index = Math.max(self._playedQuotesIndex + offset, 0);
-		var quote = self._playedQuotes[index];
-		if (QuotesData.size() > 0) {
-			while (!quote) {
-				var pickedQuote = QuotesData ? QuotesData.getRandomQuote() : null;
-				if (pickedQuote) {
-					self._playedQuotes.push(pickedQuote);
-				} else {
-					return null;
-				}
-				quote = self._playedQuotes[index];
-			}
-		}
-		self._playedQuotesIndex = index;
-		return quote;
-	},
-	togglePlaying: function(event) {
-		var self = this;
-		if ($('#tab-play').hasClass('tab-playing')) {
-			self.stopPlaying();
-		} else {
-			self.startPlaying(true);
-		}
-	},
-	resumePlaying: function() {
-		var self = this;
-		if (!self._timerPlayer && $('#tab-play').hasClass('tab-playing')) {
-			self._timerPlayer = window.setTimeout(function() {
-				self.showQuote(+1);
-			}, self._playedIntervall);
-		}
-	},
-	pausePlaying: function() {
-		var self = this;
-		window.clearTimeout(self._timerPlayer);
-		self._timerPlayer = null;
-	},
-	stopPlaying: function() {
-		var self = this;
-		self.pausePlaying();
-		$('#tab-play').removeClass('tab-playing');
-	},
-	startPlaying: function(forceStart) {
-		var self = this;
-		if (forceStart) {
-			$('#tab-play').addClass('tab-playing');
-		}
-		self.showQuote(0);
-	},
-	showQuote: function(offset) {
-		var self = this;
-		window.clearTimeout(self._timerPlayer);
-		self._timerPlayer = null;
-		try {
-			QuotesEditors.detach(null);
-			self.appendQuote(self.pickQuote(offset), $('#quote').empty());
-		} catch (error) {
-			console.log("error playing");
-			console.log(error);
-		}
-		if ($('#tab-play').hasClass('tab-playing')) {
-			self._timerPlayer = window.setTimeout(function() {
-				self.showQuote(+1);
-			}, self._playedIntervall);
-		}
-	},
-	append: function(quote, request, response) {
-		var self = this;
-		if (quote) {
-			var container = $('#quotes');
-			var node = $('<li class="quote"></li>');
-			self.appendQuote(quote, node);
-			container.append(node);
-		}
 	},
 	appendQuote: function(quote, jqNode) {
 		var self = this;
@@ -200,17 +139,17 @@ Quotes = {
 			quote[key] = newValue;
 			quote['timestamp'] = $.timestamp();
 			//self.changed({ 'modify': [ quote ] });
-			self.resumePlaying();
+			QuotesPlayer.resume(event);
 			return true;
 		});
 		editor.onChange(function(event) {
-			self.pausePlaying();
+			QuotesPlayer.suspend(event);
 		});
 		editor.onFocus(function(event) {
-			self.pausePlaying();
+			QuotesPlayer.suspend(event);
 		});
 		editor.onCancel(function(event) {
-			self.resumePlaying();
+			QuotesPlayer.resume(event);
 		});
 		editor.attach();
 	},

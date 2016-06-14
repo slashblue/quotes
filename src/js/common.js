@@ -12,8 +12,8 @@ String.prototype.capitalize = function() {
 };
 
 
-String.prototype.trimBlanks = function(text) {
-	return text.replace(/^\s*/ig, '').replace(/\s*$/ig, '');
+String.prototype.trimBlanks = function() {
+	return this.replace(/^\s*/ig, '').replace(/\s*$/ig, '');
 };
 
 
