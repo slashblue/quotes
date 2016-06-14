@@ -1,104 +1,124 @@
 Quotes = {
-	_playedQuotes: [],
-	_playedQuotesIndex: -1,
-	_playedIntervall: 10 * 1000,
-	_timerPlayer: null,
+	database: null,
+	fetcher: null,
+	searcher: null,
+	player: null,
 	setUp: function() {
 		var self = this;
-		QuotesData.onChange(function(event) {
-			self.updateStats();
-		});
-		QuotesData.onAfterLoad(function(event) {
-			self.updateStats();
-		});
-		QuotesData.setUp();
-		
-		QuotesFetchers.onHandleQuote(function(quote, request, response) {
-			QuotesData.storeQuote(quote, request, response)
-		});
-		QuotesFetchers.onFetchFinished(function(request, response) {
-			QuotesData.save(request, response);
-		});
-		QuotesFetchers.setUp();
-
-		QuotesSearcher.onBeforeSearch(function(event) {
-			QuotesEditors.detach(null);
-			$('#quotes').empty();
-		});
-		QuotesSearcher.onSearch(function(quote, event) {
-			var node = $('<li class="quote"></li>')
-			self.appendQuote(quote, node);
-			$('#quotes').append(node);
-		});
-		QuotesSearcher.onEmptySearch(function(event){
-			self.updateStats([]);
-		});
-		QuotesSearcher.onAfterSearch(function(quotes, event){
-			self.updateStats(quotes);
-		});
-		QuotesSearcher.setUp();
-
-		QuotesPlayer.onPlay(function(event) {
+		self.setUpDatabase();
+		self.setUpFetcher();
+		self.setUpSearcher();
+		self.setUpPlayer();
+		self.setUpControl();
+	},
+	setUpPlayer: function() {
+		var self = this;
+		self.player = new QuotesPlayer();
+		self.player.onPlay(function(event) {
 			$('#tab-play').addClass('tab-playing').removeClass('tab-resuming');
 		});
-		QuotesPlayer.onPause(function(event) {
+		self.player.onPause(function(event) {
 			$('#tab-play').removeClass('tab-playing').removeClass('tab-resuming');
 		});
-		QuotesPlayer.onResume(function(event) {
+		self.player.onResume(function(event) {
 			$('#tab-play').addClass('tab-resuming');
 		});
-		QuotesPlayer.onSuspend(function(event) {
+		self.player.onSuspend(function(event) {
 			$('#tab-play').removeClass('tab-resuming');
 		});
-		QuotesPlayer.onNext(function(nextQuote, previousQuote, event) {
+		self.player.onNext(function(nextQuote, previousQuote, event) {
 			QuotesEditors.detach(null);
 			self.appendQuote(nextQuote, $('#quote').empty());
 		});
-		QuotesPlayer.onPrevious(function(nextQuote, previousQuote, event) {
+		self.player.onPrevious(function(nextQuote, previousQuote, event) {
 			QuotesEditors.detach(null);
 			self.appendQuote(nextQuote, $('#quote').empty());
 		});
-		QuotesPlayer.onReady(function(nextQuote, event){
+		self.player.onReady(function(nextQuote, event){
 			self.appendQuote(nextQuote, $('#quote').empty());
 			if ($('#quote').is(':visible')) {
 				this.play(event);
 			}
 		});
-		QuotesPlayer.setUp();
-		
+		self.player.setUp();
+	},
+	setUpDatabase: function() {
+		var self = this;
+		self.database = new QuotesDatabase();
+		self.database.onChange(function(event) {
+			self.updateStats();
+		});
+		self.database.onAfterLoad(function(event) {
+			self.updateStats();
+		});
+		self.database.setUp();
+	},
+	setUpFetcher: function() {
+		var self = this;
+		self.fetcher = new QuotesFetcher();
+		self.fetcher.onHandleQuote(function(quote, request, response) {
+			self.database.storeQuote(quote, request, response)
+		});
+		self.fetcher.onFetchFinished(function(request, response) {
+			self.database.save(request, response);
+		});
+		self.fetcher.setUp();
+	},
+	setUpSearcher: function() {
+		var self = this;
+		self.searcher = new QuotesSearcher();
+		self.searcher.onBeforeSearch(function(event) {
+			QuotesEditors.detach(null);
+			$('#quotes').empty();
+		});
+		self.searcher.onSearch(function(quote, event) {
+			var node = $('<li class="quote"></li>')
+			self.appendQuote(quote, node);
+			$('#quotes').append(node);
+		});
+		self.searcher.onEmptySearch(function(event){
+			self.updateStats([]);
+		});
+		self.searcher.onAfterSearch(function(quotes, event){
+			self.updateStats(quotes);
+		});
+		self.searcher.setUp();
+	},
+	setUpControl: function() {
+		var self = this;
 		$('.tab').on('click.quotes', function(event) {
 			var tab = $(this);
 			if (tab.hasClass('tab-active')) {
 				// todo
-				if (QuotesPlayer.isSuspended()) {
-					QuotesPlayer.toggle(event);
+				if (self.player.isSuspended()) {
+					self.player.toggle(event);
 				} else {
-					QuotesPlayer.resume(event);
+					self.player.resume(event);
 				}
 			} else {
 				$('.tab').removeClass('tab-active');
 				$('.tab-content').removeClass('tab-content-active');
 				tab.addClass('tab-active');
 				$(tab.attr('href')).addClass('tab-content-active');
-				QuotesPlayer.suspend(event);
+				self.player.suspend(event);
 			}
 		});		
 		$('#nextQuote').on('click.quotes', function(event) {
-			QuotesPlayer.next(event);
+			self.player.next(event);
 		});
 		$('#previousQuote').on('click.quotes', function(event) {
-			QuotesPlayer.previous(event);
+			self.player.previous(event);
 		});
 		$(document).on('keydown.editor', function(event) {
 			if ($('#tab-play').hasClass('tab-active')) {
 				if ($.isKeyEvent(39, event) || $.isKeyEvent(40, event)) { // left, down
-					return QuotesPlayer.next(event);
+					return self.player.next(event);
 				}
 				if ($.isKeyEvent(37, event) || $.isKeyEvent(38, event)) { // right, up
-					return QuotesPlayer.previous(event);
+					return self.player.previous(event);
 				}
 				if ($.isKeyEvent(32, event)) { // space
-					return QuotesPlayer.toggle(event);
+					return self.player.toggle(event);
 				}
 			}
 		});
@@ -139,17 +159,17 @@ Quotes = {
 			quote[key] = newValue;
 			quote['timestamp'] = $.timestamp();
 			//self.changed({ 'modify': [ quote ] });
-			QuotesPlayer.resume(event);
+			self.player.resume(event);
 			return true;
 		});
 		editor.onChange(function(event) {
-			QuotesPlayer.suspend(event);
+			self.player.suspend(event);
 		});
 		editor.onFocus(function(event) {
-			QuotesPlayer.suspend(event);
+			self.player.suspend(event);
 		});
 		editor.onCancel(function(event) {
-			QuotesPlayer.resume(event);
+			self.player.resume(event);
 		});
 		editor.attach();
 	},
@@ -157,9 +177,9 @@ Quotes = {
 		var self = this;
 		var text = '';
 		if (results) {
-			text = 'Displaying ' + results.length + ' of ' + QuotesData.size() + ' quotes';
+			text = 'Displaying ' + results.length + ' of ' + self.database.size() + ' quotes';
 		} else {
-			text = QuotesData.size() + ' quotes available';
+			text = self.database.size() + ' quotes available';
 		}
 		$('#stats').empty().text(text);
 	}

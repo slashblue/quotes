@@ -1,8 +1,18 @@
-QuotesPlayer = {
-	_playedQuotes: [],
-	_playedQuotesIndex: -1,
-	_playedIntervall: 10 * 1000,
-	_timerPlayer: null,
+QuotesPlayer = function() {
+	this._playedQuotes = [];
+	this._playedQuotesIndex = -1;
+	this._playedIntervall = 10 * 1000;
+	this._timerPlayer = null;
+	this._onReady = function(currentQuote, event) {};
+	this._onPlay = function(currentQuote, event) {};
+	this._onResume = function(event) {};
+	this._onSuspend = function(event) {};
+	this._onPause = function(currentQuote, event) {};
+	this._onNext = function(nextQuote, previousQuote, event) {};
+	this._onPrevious = function(nextQuote, previousQuote, event) {};
+};
+
+QuotesPlayer.prototype = {
 	setUp: function() {
 		var self = this;
 		var currentQuote = self.nextQuote(0);
@@ -44,13 +54,13 @@ QuotesPlayer = {
 			self._onSuspend(event);
 		}
 	},
-	pause: function() {
+	pause: function(event) {
 		var self = this;
 		window.clearTimeout(self._timerPlayer);
 		self._timerPlayer = null;
 		var currentQuote = self.currentQuote();
 		if (self._onPlay) {
-			self._onPlay(currentQuote);
+			self._onPlay(currentQuote, event);
 		}
 	},
 	next: function(event) {
@@ -112,9 +122,9 @@ QuotesPlayer = {
 		var self = this;
 		var index = Math.max(self._playedQuotesIndex + offset, 0);
 		var quote = self._playedQuotes[index];
-		if (QuotesData.size() > 0) {
+		if (Quotes.database && Quotes.database.size() > 0) {
 			while (!quote) {
-				var pickedQuote = QuotesData ? QuotesData.getRandomQuote() : null;
+				var pickedQuote = Quotes.database ? Quotes.database.getRandomQuote() : null;
 				if (pickedQuote) {
 					self._playedQuotes.push(pickedQuote);
 				} else {
@@ -126,4 +136,4 @@ QuotesPlayer = {
 		self._playedQuotesIndex = index;
 		return quote;
 	}
-}
+};

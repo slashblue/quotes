@@ -1,13 +1,16 @@
-QuotesData = {
-	_db: null,
-	_quotes: {},
-	_requests: [],
-	_lastChange: null,
-	_onBeforeLoad: function() {},
-	_onAfterLoad: function() {},
-	_onBeforeSave: function() {},
-	_onAfterSave: function() {},
-	_onChange: function() {},
+QuotesDatabase = function() {
+	this._db = null;
+	this._quotes = {};
+	this._requests = [];
+	this._lastChange = null;
+	this._onBeforeLoad = function() {};
+	this._onAfterLoad = function() {};
+	this._onBeforeSave = function() {};
+	this._onAfterSave = function() {};
+	this._onChange = function(changes) {};
+};
+
+QuotesDatabase.prototype = {
 	setUp: function() {
 		var self = this;
 		self.load();
@@ -115,14 +118,14 @@ QuotesData = {
 		if (self._lastChange) {
 			if (self._db && self._db.set) {
 				if (self._onBeforeSave) {
-					self._onBeforeSave.apply(self);
+					self._onBeforeSave();
 				}
 				self._db.set('quotes', self._quotes).value();
-				self._db.set('requests', (QuotesFetchers ? QuotesFetchers.getRequests() : [])).value();
+				self._db.set('requests', (Quotes.fetcher ? Quotes.fetcher.getRequests() : [])).value();
 				self._db.write();
 				self._lastChange = null;
 				if (self._onAfterSave) {
-					self._onAfterSave.apply(self);
+					self._onAfterSave();
 				}
 			}
 		}

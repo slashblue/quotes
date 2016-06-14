@@ -37,9 +37,9 @@ QuotesStringEditor = function(jqNode) {
 	this._text = null;
 	this._timerScheduled = null;
 	this._timerState = null;
-	this._onChange = null;
-	this._onSave = null;
-	this._onCancel = null;
+	this._onChange = function(event) {};
+	this._onSave = function(event) {};
+	this._onCancel = function(event) {};
 };
 
 

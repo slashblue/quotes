@@ -1,9 +1,12 @@
-QuotesSearcher = {	
-	_timerSearch: null,
-	_onSearch: function() {},
-	_onEmptySearch: function() {},
-	_onBeforeSearch: function() {},
-	_onAfterSearch: function() {},
+QuotesSearcher = function() {
+	this._timerSearch = null;
+	this._onSearch = function(quote, event) {};
+	this._onEmptySearch = function(event) {};
+	this._onBeforeSearch = function(event) {};
+	this._onAfterSearch = function(results, event) {};
+};
+
+QuotesSearcher.prototype = {
 	setUp: function() {
 		var self = this;
 		$('#searchText').on('keyup.quotes', function(event) {
@@ -63,7 +66,7 @@ QuotesSearcher = {
 		var self = this;
 		var results = [];
 		if (searchTerms && searchTerms.length > 0) {
-			QuotesData.each(function(quote) {
+			Quotes.database.each(function(quote) {
 				if (self.matchesSearchTerms(searchTerms, quote)) {
 					if (callback) {
 						results.push(quote);

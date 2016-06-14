@@ -1,9 +1,12 @@
-QuotesFetchers = {
-	_specs: [],
-	_requests: [],
-	_timer: null,
-	_onHandleQuote: null,
-	_onFetchFinished: null,
+QuotesFetcher = function() {
+	this._specs = [];
+	this._requests = [];
+	this._timer = null;
+	this._onHandleQuote = function(quote, request, response) {};
+	this._onFetchFinished = function(request, response) {};
+};
+
+QuotesFetcher.prototype = {
 	/*
 	register: function(urls, interval, callback) {
 		var self = this;
@@ -244,7 +247,9 @@ QuotesFetchers = {
 					try {
 						if (response) {
 							callback(request, response);
-							self.onFetchFinished(request, response);
+							if (self._onFetchFinished) {
+								self._onFetchFinished(request, response);
+							}
 						}
 					} catch (error) {
 						request['error'] = error;
