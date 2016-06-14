@@ -2,9 +2,7 @@ Quotes = {
 	_playedQuotes: [],
 	_playedQuotesIndex: -1,
 	_playedIntervall: 10 * 1000,
-	_timerSearch: null,
 	_timerPlayer: null,
-	_onChange: function() {},
 	setUp: function() {
 		var self = this;
 		QuotesData.onChange(function() {
@@ -26,20 +24,20 @@ Quotes = {
 	},
 	initUI: function() {
 		var self = this;
-		$('#searchText').on('keyup.quotes', function(event) {
-			window.clearTimeout(self._timerSearch);
-			self._timerSearch = window.setTimeout(function() {
-				var results = [];
-				$('#quotes').empty();
-				self.searchForText($('#searchText').val(), function(quote) {
-					self.append(quote);
-					results.push(quote);
-				}, function() {
-					results = null;
-				});
-				self.updateStats(results);
-			}, 100);	
+		QuotesSearcher.onBeforeSearch(function(event) {
+			$('#quotes').empty();
 		});
+		QuotesSearcher.onSearch(function(quote, event) {
+			self.append(quote);
+		});
+		QuotesSearcher.onEmptySearch(function(event){
+			self.updateStats([]);
+		});
+		QuotesSearcher.onAfterSearch(function(quotes, event){
+			self.updateStats(quotes);
+		});
+		QuotesSearcher.setUp();
+
 		// TODO
 		$('.tab').on('click.quotes', function(event) {
 			var tab = $(this);
@@ -68,9 +66,7 @@ Quotes = {
 				}			
 			}
 		});
-		$('#tab-search').on('click.quotes', function(event) {
-			$('#searchText').focus();
-		});
+		
 		$('#nextQuote').on('click.quotes', function(event) {
 			self.showQuote(+1);
 		});
@@ -158,72 +154,6 @@ Quotes = {
 				self.showQuote(+1);
 			}, self._playedIntervall);
 		}
-	},
-	searchForText: function(text, callback, callbackOnAbort) {
-		var self = this;
-		if (text && text.replace(/^\s*/ig, '').replace(/\s*$/ig, '').length > 3) {
-			self.searchForTerms(self.searchTerms(text), callback, callbackOnAbort);
-		} else {
-			if (callbackOnAbort) {
-				callbackOnAbort();
-			}
-		}
-	},
-	searchForTerms: function(searchTerms, callback, callbackOnAbort) {
-		var self = this;
-		if (searchTerms && searchTerms.length > 0) {
-			QuotesData.each(function(quote) {
-				if (self.matchesSearchTerms(searchTerms, quote)) {
-					if (callback) {
-						callback(quote);
-					}
-				}
-			});
-		} else {
-			if (callbackOnAbort) {
-				callbackOnAbort();
-			}
-		}
-	},
-	searchTerms: function(text) {
-		var self = this;
-		return $.grep(text.split(' '), function(substring) { return substring.length > 0; });
-
-	},	
-	matchesSearchTerms: function (searchTerms, quote) {
-		var self = this;
-		var continueSearch = true;
-		$(searchTerms).each(function(index, searchTerm) {
-			if (continueSearch && !self.matchesSearchTerm(searchTerm, quote)) {
-				continueSearch = false;
-			}
-		});
-		return continueSearch;
-	},
-	matchesSearchTerm: function(searchTerm, quote) {
-		var self = this;
-		if (quote) {
-			if (quote['quote'] && self.matchesSubstring(searchTerm, quote['quote'])) {
-				return true;
-			}
-			if (quote['author'] && self.matchesSubstring(searchTerm, quote['author'])) {
-				return true;
-			}
-			if (quote['source'] && self.matchesSubstring(searchTerm, quote['source'])) {
-				return true;
-			}
-			if (quote['language'] && self.matchesSubstring(searchTerm, quote['language'])) {
-				return true;
-			}
-			if (quote['keywords'] && $.grep(quote['keywords'], function(eachKeyword) { return self.matchesSubstring(searchTerm, eachKeyword); }).length > 0) {
-				return true;
-			}
-		}
-		return false;
-	},
-	matchesSubstring(searchTerm, text) {
-		var self = this;
-		return searchTerm && text && (text.indexOf(searchTerm) >= 0 || text.toLowerCase().indexOf(searchTerm.toLowerCase()) >= 0);
 	},
 	append: function(quote, request, response) {
 		var self = this;

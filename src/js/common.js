@@ -12,6 +12,11 @@ String.prototype.capitalize = function() {
 };
 
 
+String.prototype.trimBlanks = function(text) {
+	return text.replace(/^\s*/ig, '').replace(/\s*$/ig, '');
+};
+
+
 $.allSatisfy = function(array, callback) {
 	return array && $.grep(array, function(each) { return callback(each); }).length === array.length;
 };
@@ -36,8 +41,7 @@ $.normalize = function(text) {
 			.replace('ß', 'ss')
 			.replace('"', '')
 			.replace('“', '')
-			.replace(/^\s+/, '')
-			.replace(/\s+$/, '');
+			.trimBlanks();
 };
 
 
@@ -90,6 +94,8 @@ $.isKeyEvent = function(charOrNumber, event) {
 	return false;
 };
 
+
 $.timestamp = function() {
 	return (new Date()).getTime();
 };
+
