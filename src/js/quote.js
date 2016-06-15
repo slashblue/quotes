@@ -100,21 +100,25 @@ Quote.prototype = {
 		var self = this;
 		var found = false;
 		self.eachKeyword(function(index, each) {
-			if (!found && keyword == each) {
+			if (!found && keyword == each || $.normalize(keyword) == $.normalize(each)) {
 				found = true;
 			}
 		});
 		return found;
 	},
 	equals: function(quote) {
-		return this.type == quote.type
-				&& (this === quote 
-					|| this == quote 
-					|| this.getHashCode() == quote.getHashCode()
-					|| (this.getText() == quote.getText() && this.getAuthor() == quote.getAuthor()));
+		var self = this;
+		return self.type == quote.type
+				&& (self === quote 
+					|| self == quote 
+					|| self.getHashCode() == quote.getHashCode()
+					|| (self.getText() == quote.getText() && self.getAuthor() == quote.getAuthor()));
 	},
 	isValid: function() {
-		return this.data['text'] && typeof this.data['text'] == 'string' && this.data['text'].trimBlanks() && this.getHashCode();
+		return this.data['text'] 
+				&& typeof this.data['text'] == 'string' 
+				&& this.data['text'].trimBlanks() 
+				&& this.getHashCode();
 	},
 	migrate: function() {
 		var self = this;
