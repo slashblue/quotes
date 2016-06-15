@@ -37,7 +37,7 @@ QuotesFetcher.prototype = {
 					var text = $.normalize(nodeQuote.find('.bqQuoteLink > a').text());
 					var author = $.normalize(nodeQuote.find('.bq-aut > a').text());
 					var keywords = $.normalizeList(nodeQuote.find('.bq_q_nav a').map(function(indexKeywords, eachKeyword) { return $(eachKeyword).text(); }));
-					self.handle(text, author, keywords, null, 'en', false, request, response);
+					self.handle(text, author, keywords, null, 'en', true, request, response);
 				});
 			});
 		});	
@@ -50,7 +50,7 @@ QuotesFetcher.prototype = {
 					if (nodeAuthor && nodeAuthor[0]) {
 						var author = $.normalize(nodeAuthor.find("b > a").text());
 						var keywords = $.normalizeList([ nodeAuthor.find("div.related > a").text() ]);
-						self.handle(text, author, keywords, null, 'en', false, request, response);
+						self.handle(text, author, keywords, null, 'en', true, request, response);
 					}
 				});
 			});
@@ -60,7 +60,7 @@ QuotesFetcher.prototype = {
 				var nodeQuote = $(response).find('.bqcpx');
 				var text = $.normalize(nodeQuote.find('div.bq-slide-q-text > a').text());
 				var author = $.normalize(nodeQuote.find('a.ws-author').text());
-				self.handle(text, author, [], null, 'en', false, request, response);
+				self.handle(text, author, [], null, 'en', true, request, response);
 			});
 		});
 		self.schedule(function() {
@@ -72,7 +72,7 @@ QuotesFetcher.prototype = {
 					var author = $.normalize(nodeQuote.find('.quoteText > a.authorOrTitle').text());
 					var keywords = $.normalizeList($.grep(nodeQuote.find('.quoteFooter > div.smallText > a').map(function(indexKeywords, eachKeyword) { return $.normalize($(eachKeyword).text()).capitalize(); }), function(eachKeyword) { return eachKeyword && eachKeyword.length > 0 && eachKeyword.indexOf('no-source') < 0 && eachKeyword.indexOf('attributed') < 0 && eachKeyword.indexOf('Attributed') < 0; }));
 					var source = $.normalize(nodeQuote.find('.quoteText > span > a.authorOrTitle').text());
-					self.handle(text, author, keywords, null, 'en', false, request, response);
+					self.handle(text, author, keywords, null, 'en', true, request, response);
 				});
 			});
 		});
@@ -82,7 +82,7 @@ QuotesFetcher.prototype = {
 					var nodeQuote = $(eachNode);
 					var text = $.normalize(nodeQuote.find('table.a-auto span.quote').text());
 					var author = $.normalize(nodeQuote.find('table.a-auto a.quote-btn').text());
-					self.handle(text, author, [], null, 'de', false, request, response);
+					self.handle(text, author, [], null, 'de', true, request, response);
 				});
 			});
 		});
@@ -93,7 +93,7 @@ QuotesFetcher.prototype = {
 					var text = $.normalize(nodeQuote.find('.stripex > a > p').text());
 					var author = $.normalize(nodeQuote.find('div.authorInLoop > a').text());
 					var keywords = $.normalizeList($($.grep($(nodeQuote).attr('class').split(' '), function(className) { return className && className.indexOf('tag-') >= 0; })).map(function(indexClassName, eachClassName) { return $.normalize(eachClassName.replace('tag-', '')).capitalize(); }));
-					self.handle(text, author, keywords, null, 'de', false, request, response);
+					self.handle(text, author, keywords, null, 'de', true, request, response);
 				});
 			});
 		});
@@ -103,7 +103,7 @@ QuotesFetcher.prototype = {
 					var nodeQuote = $(eachNode);
 					var text = $.normalize(nodeQuote.find('p.spruch > a').text());
 					var author = $.normalize(nodeQuote.find('p.autor > a').text());
-					self.handle(text, author, [], null, 'de', false, request, response);
+					self.handle(text, author, [], null, 'de', true, request, response);
 				});
 			});
 		});
@@ -113,7 +113,7 @@ QuotesFetcher.prototype = {
 					var nodeQuote = $(eachNode);
 					var text = $.normalize(nodeQuote.find('p').text());
 					var author = $.normalize(self.swap(nodeQuote.find('small > a').text()));
-					self.handle(text, author, [], null, 'de', false, request, response);
+					self.handle(text, author, [], null, 'de', true, request, response);
 				});
 			});
 		});
@@ -123,7 +123,7 @@ QuotesFetcher.prototype = {
 					var nodeQuote = $(eachNode);
 					var text = $.normalize(nodeQuote.find('.quote_text').text());
 					var author = $.normalize(nodeQuote.find('.quote_author > a').text());
-					self.handle(text, author, [], null, 'de', false, request, response);
+					self.handle(text, author, [], null, 'de', true, request, response);
 				});
 			});
 		});	
@@ -134,7 +134,7 @@ QuotesFetcher.prototype = {
 					var text = $.normalize(nodeQuote.find('p.witztext').text());
 					var author = $.normalize(nodeQuote.find('p.autor > a').text());
 					var keywords = $.normalizeList(nodeQuote.find('p.schlagworte > a').map(function(indexKeyword, eachKeyword) { return $(eachKeyword).text(); }));
-					self.handle(text, author, keywords, null, 'de', false, request, response);
+					self.handle(text, author, keywords, null, 'de', true, request, response);
 				});
 			});
 		});
@@ -149,7 +149,7 @@ QuotesFetcher.prototype = {
 						var indexAuthor = rawAuthor.indexOf('(');
 						var author = $.normalize((indexAuthor > 0 ? rawAuthor.slice(0, indexAuthor) : rawAuthor).replace(/<\s*\/?\s*br\s*\/?\s*>/g, ''));
 						if (text && author) {
-							self.handle(text, author, [], null, 'de', false, request, response);
+							self.handle(text, author, [], null, 'de', true, request, response);
 						}
 					}
 				});
@@ -165,7 +165,7 @@ QuotesFetcher.prototype = {
 					var matchAuthor = rawAuthor.match(/([a-zA-ZÀÁÂÃÄÅàáâãäåĀāąĄæÇçćĆčČđĐďĎÈÉÊËèéêëěĚĒēęĘÌÍÎÏìíîïĪīłŁÑñňŇńŃÒÓÔÕÕÖØòóôõöøŌōřŘŠšśŚťŤÙÚÛÜùúûüůŮŪūŸÿýÝŽžżŻźŹ\-'. ]*[a-zA-ZÀÁÂÃÄÅàáâãäåĀāąĄÇçćĆčČđĐďĎÈÉÊËèéêëěĚĒēęĘÌÍÎÏìíîïĪīłŁÑñňŇńŃÒÓÔÕÕÖØòóôõöøŌōřŘŠšśŚťŤÙÚÛÜùúûüůŮŪūŸÿýÝŽžżŻźŹ])(\s+\*?\d+\s*(-\s*(\d+))?\s*(v|n\.\s*Chr\.)?)?/);
 					var author = matchAuthor ? $.normalize(matchAuthor[1]) : null;
 					if (text && author) {
-						self.handle(text, author, [], null, 'de', false, request, response);
+						self.handle(text, author, [], null, 'de', true, request, response);
 					}
 				});
 			});
@@ -179,23 +179,23 @@ QuotesFetcher.prototype = {
 					var author = null;
 					var indexText = rawText.indexOf('<em');
 					var matchText = rawText.match(/(<\s*\/?\s*br\s*\/?\s*>)(\s*↵*\s*(–|-)\s*)(.*)$/);
-					var unsafe = false;
+					var safe = true;
 					if (matchText && matchText[0] && indexText <= 0) {
 						indexText = rawText.indexOf(matchText[0]);
 						if (indexText > 0) {
 							text = $.normalizeHtml(rawText.slice(0, indexText));
 							author = $.normalize(matchText[4]);
-							unsafe = true;
+							safe = false;
 						} 
 					} else {
 						if (indexText < 0) {
-							unsafe = true;
+							safe = false;
 						}
 						text = $.normalizeHtml(rawText.slice(0, indexText));
 						author = $.normalize(nodeQuote.find('em').text()) || 'Unbekannter Autor';
 
 					}
-					self.handle(text, author, [], null, 'de', unsafe, request, response);
+					self.handle(text, author, [], null, 'de', safe, request, response);
 				});
 			});
 		});
@@ -304,26 +304,9 @@ QuotesFetcher.prototype = {
 		self._requests.push(newRequest);
 		return newRequest;
 	},
-	createNewQuote: function(quote, author, keywords, source, language, unsafe, request, response) {
-		var self = this;
-		var newQuote = {};
-		if (quote) {
-			newQuote['quote'] = quote;
-		}
-		if (author) {
-			newQuote['author'] = author;
-		}
-		if (keywords && typeof keywords === 'object' && keywords.length > 0) {
-			newQuote['keywords'] = keywords;
-		}
-		if (language) {
-			newQuote['language'] = language;
-		}
-		if (source) {
-			newQuote['source'] = source;
-		}
-		newQuote['timestamp'] = (request && request.timestamp ? request.timestamp : null) || $.timestamp();
-		newQuote['unsafe'] = !!unsafe;
+	createNewQuote: function(quote, author, keywords, source, language, safe, request, response) {
+		var newQuote = new Quote(quote, author, keywords, source, language, !!safe);
+		newQuote.setTimestamp((request && request.timestamp ? request.timestamp : null) || $.timestamp());
 		return newQuote;
 	},
 	swap: function(text) {
@@ -340,11 +323,11 @@ QuotesFetcher.prototype = {
 	onFetchFinished: function(callback) {
 		_onFetchFinished = callback;
 	},
-	handle: function(text, author, keywords, source, language, unsafe, request, response) {
+	handle: function(text, author, keywords, source, language, safe, request, response) {
 		var self = this;
 		if (text) {
 			if (self.isSafe(text) && self.isSafe(author) && $.allSatisfy(keywords, function(each) { return self.isSafe(each); })) {
-				var quote = self.createNewQuote(text, author, keywords, source, language, unsafe, request, response);
+				var quote = self.createNewQuote(text, author, keywords, source, language, safe, request, response);
 				if (request) {
 					request['quotes'].push(quote);
 				}
@@ -352,7 +335,7 @@ QuotesFetcher.prototype = {
 					self._onHandleQuote(quote, request, response);
 				}
 			} else {
-				console.log([ '--- POSSIBLE ERROR --- ', text, author, keywords, source, language, unsafe, request, response ]);
+				console.log([ '--- POSSIBLE ERROR --- ', text, author, keywords, source, language, safe, request, response ]);
 			}
 		}
 	},

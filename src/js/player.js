@@ -122,9 +122,9 @@ QuotesPlayer.prototype = {
 		var self = this;
 		var index = Math.max(self._playedQuotesIndex + offset, 0);
 		var quote = self._playedQuotes[index];
-		if (Quotes.database && Quotes.database.size() > 0) {
+		if (QuotesUI.database && QuotesUI.database.size() > 0) {
 			while (!quote) {
-				var pickedQuote = Quotes.database ? Quotes.database.getRandomQuote() : null;
+				var pickedQuote = QuotesUI.database ? QuotesUI.database.getRandomQuote() : null;
 				if (pickedQuote) {
 					self._playedQuotes.push(pickedQuote);
 				} else {

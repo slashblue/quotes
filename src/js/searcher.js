@@ -66,7 +66,7 @@ QuotesSearcher.prototype = {
 		var self = this;
 		var results = [];
 		if (searchTerms && searchTerms.length > 0) {
-			Quotes.database.each(function(key, quote) {
+			QuotesUI.database.eachQuote(function(index, quote) {
 				if (self.matchesSearchTerms(searchTerms, quote)) {
 					if (callback) {
 						results.push(quote);
@@ -95,21 +95,9 @@ QuotesSearcher.prototype = {
 	matchesSearchTerm: function(searchTerm, quote) {
 		var self = this;
 		if (quote) {
-			if (quote['quote'] && self.matchesSubstring(searchTerm, quote['quote'])) {
-				return true;
-			}
-			if (quote['author'] && self.matchesSubstring(searchTerm, quote['author'])) {
-				return true;
-			}
-			if (quote['source'] && self.matchesSubstring(searchTerm, quote['source'])) {
-				return true;
-			}
-			if (quote['language'] && self.matchesSubstring(searchTerm, quote['language'])) {
-				return true;
-			}
-			if (quote['keywords'] && $.grep(quote['keywords'], function(eachKeyword) { return self.matchesSubstring(searchTerm, eachKeyword); }).length > 0) {
-				return true;
-			}
+			return quote.matchesSearchTerm(function(text) {
+				return self.matchesSubstring(searchTerm, text);
+			});
 		}
 		return false;
 	},

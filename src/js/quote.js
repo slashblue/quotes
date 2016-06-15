@@ -1,12 +1,31 @@
-Quote = function(text, author, keywords, source, language, timestamp) {
+Quotes = {
+	create: function() {
+		return [];
+	},
+	// TODO: not necessary
+	read: function(array) {
+		return $(array || []).map(function(index, each) {
+			return new QuoteFromDB(each);
+		}).toArray();
+	},
+	// TODO: not necessary
+	write: function(array) {
+		return $(array || []).map(function(index, each) {
+			return each.data;
+		}).toArray();
+	}
+};
+
+Quote = function(text, author, keywords, source, language, timestamp, safe) {
 	this.type = 'quote';
 	this.data = {};
 	this.setText(text);
-	this.setAuthor(author)
-	this.setKeywords(keywords)
-	this.setSource(source)
-	this.setLanguage(language)
+	this.setAuthor(author);
+	this.setKeywords(keywords);
+	this.setSource(source);
+	this.setLanguage(language);
 	this.setTimestamp(timestamp);
+	this.setSafe(safe);
 };
 
 Quote.prototype = {
@@ -50,6 +69,12 @@ Quote.prototype = {
 	getHashCode: function() {
 		return this.data['hashCode'];
 	},
+	getSafe: function() {
+		return this.data['safe'];
+	},
+	setSafe: function(safe) {
+		this.data['safe'] = !!safe;
+	},
 	addKeyword: function(keyword) {
 		var self = this;
 		if (keyword) {
@@ -68,13 +93,13 @@ Quote.prototype = {
 	eachKeyword: function(callback) {
 		var self = this;
 		$(self.getKeywords()).each(function(index, each) {
-			callback(each);
+			callback(index, each);
 		});
 	},
 	includesKeyword: function(keyword) {
 		var self = this;
 		var found = false;
-		self.eachKeyword(function(each) {
+		self.eachKeyword(function(index, each) {
 			if (!found && keyword == each) {
 				found = true;
 			}
@@ -90,5 +115,92 @@ Quote.prototype = {
 	},
 	isValid: function() {
 		return this.data['text'] && typeof this.data['text'] == 'string' && this.data['text'].trimBlanks() && this.getHashCode();
+	},
+	migrate: function() {
+		var self = this;
+		var changed = false;
+		// migrate quote
+		var oldText = self.getText();
+		var newText = $.normalize(oldText);
+		if (oldText != newText) {
+			self.setText(newText);
+			changed = true;
+		}
+		// migrate safe state
+		var oldUnsafe = self.getSafe();
+		var newUnsafe = !!oldUnsafe;
+		if (oldUnsafe != newUnsafe) {
+			self.setSafe(newUnsafe);
+			changed = true;
+		}
+		// migrate keywords
+		var oldKeywords = self.getKeywords() || [];
+		var newKeywords = $.grep(oldKeywords, function(keyword) { return keyword && $.normalize(keyword); });
+		if (oldKeywords.length != newKeywords.length) {
+			self.setKeywords(newKeywords);
+			changed = true;
+		}
+		return changed;
+	},
+	merge: function(quote) {
+		var self = this;
+		var merged = false;
+		var existingData = self.data;
+		var newData = quote.data;
+		for (key in newData) {
+			if (newData.hasOwnProperty(key) && key != 'timestamp') {
+				var existingValue = existingData[key];
+				var newValue = newData[key];
+				if (newValue && newValue != existingValue) {
+					if (typeof newValue === 'object') {
+						if (!$.isSameArray(newValue, existingValue)) {
+							var newValueMerged = $.unique((newValue || []).concat((existingValue || []))).sort();
+							if (newValueMerged != existingValue || !$.isSameArray(newValueMerged, existingValue)) {
+								existingData[key] = newValueMerged;
+								merged = true;
+							}
+						}
+					} else {
+						existingData[key] = newValue;
+						merged = true;
+					}
+				}
+			}
+		}
+		if (merged) {
+			existingData['hashCode'] = $.hashCode(existingData['text']);
+			existingData['timestamp'] = newData['timestamp'];
+		}
+		return merged;
+	},
+	change: function() {
+		this.setTimestamp($.timestamp());
+	},
+	matchesSearchTerm: function(callback) {
+		var self = this;
+		if (self.getText() && callback(self.getText())) {
+			return true;
+		}
+		if (self.getAuthor() && callback(self.getAuthor())) {
+			return true;
+		}
+		if (self.getSource() && callback(self.getSource())) {
+			return true;
+		}
+		if (self.getLanguage() && callback(self.getLanguage())) {
+			return true;
+		}
+		if (self.getKeywords() && $.grep(self.getKeywords(), function(eachKeyword) { return callback(eachKeyword); }).length > 0) {
+			return true;
+		}
+		return false;
 	}
 };
+
+QuoteFromDB = function(data) {
+	this.type = 'quote';
+	this.data = data;
+};
+
+QuoteFromDB.prototype = {};
+$.extend(QuoteFromDB.prototype, Quote.prototype);

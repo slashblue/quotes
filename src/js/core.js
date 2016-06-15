@@ -1,4 +1,4 @@
-Quotes = {
+QuotesUI = {
 	database: null,
 	fetcher: null,
 	searcher: null,
@@ -126,39 +126,38 @@ Quotes = {
 	appendQuote: function(quote, jqNode) {
 		var self = this;
 		if (quote) {
-			if (quote['quote']) {
-				var nodeQuote = $('<q class="quote-text">' + quote['quote'] + '</q>');
-				self.editable(nodeQuote, new QuotesStringEditor(nodeQuote), quote, 'quote');
+			if (quote.getText()) {
+				var nodeQuote = $('<q class="quote-text">' + quote.getText() + '</q>');
+				self.editable(nodeQuote, new QuotesStringEditor(nodeQuote), quote, quote.setText);
 				jqNode.append(nodeQuote);
 			} 
-			if (quote['author']) {
-				var nodeAuthor = $('<span class="quote-author">' + quote['author'] + '</span>');
-				self.editable(nodeAuthor, new QuotesStringEditor(nodeAuthor), quote, 'author');
+			if (quote.getAuthor()) {
+				var nodeAuthor = $('<span class="quote-author">' + quote.getAuthor() + '</span>');
+				self.editable(nodeAuthor, new QuotesStringEditor(nodeAuthor), quote, quote.setAuthor);
 				jqNode.append(nodeAuthor);
 			}
-			if (quote['keywords'] && quote['keywords'].length > 0) {
+			if (quote.getKeywords() && quote.getKeywords().length > 0) {
 				var nodeKeywords = $('<div class="quote-keywords">');
-				$(quote['keywords']).each(function(index, each) {
+				quote.eachKeyword(function(index, each) {
 					nodeKeywords.append($('<span class="quote-keyword">' + each + '</span>'));
 				});
-				self.editable(nodeKeywords, new QuotesListEditor(nodeKeywords, '<span class="quote-keyword">%{text}</span>'), quote, 'keywords');
+				self.editable(nodeKeywords, new QuotesListEditor(nodeKeywords, '<span class="quote-keyword">%{text}</span>'), quote, quote.setKeywords);
 				jqNode.append(nodeKeywords);
 			}
-			if (quote['source']) {
-				var nodeSource = $('<cite class="quote-source">' + quote['source'] + '</cite>');
-				self.editable(nodeSource, new QuotesStringEditor(nodeSource), quote, 'source');
+			if (quote.getSource()) {
+				var nodeSource = $('<cite class="quote-source">' + quote.getSource() + '</cite>');
+				self.editable(nodeSource, new QuotesStringEditor(nodeSource), quote, quote.setSource);
 				jqNode.append(nodeSource);
 			}
 		}
 	},
-	editable: function(jqNode, editor, quote, key) {
+	editable: function(jqNode, editor, quote, callback) {
 		var self = this;
 		editor.setUp();
-		// TODO database key !!!!!
 		editor.onSave(function(oldValue, newValue, event) {
-			quote[key] = newValue;
-			quote['timestamp'] = $.timestamp();
-			//self.changed({ 'modify': [ quote ] });
+			callback(newValue);
+			quote.change();
+			self.database.changed({ 'edit': [ quote ]});
 			self.player.resume(event);
 			return true;
 		});
@@ -187,5 +186,5 @@ Quotes = {
 
 
 $(document).ready(function() {
-	Quotes.setUp();
+	QuotesUI.setUp();
 });
