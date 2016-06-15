@@ -1,5 +1,6 @@
-QuotesDatabase = function() {
+QuotesDatabase = function(path) {
 	this._db = null;
+	this._path = path,
 	this._quotes = {};
 	this._requests = [];
 	this._lastChange = null;
@@ -17,7 +18,7 @@ QuotesDatabase.prototype = {
 	},
 	load: function() {
 		var self = this;
-		self._db = low('./data/db.json', { storage: require('lowdb/lib/file-async') });
+		self._db = low(self.path, { storage: require('lowdb/lib/file-async') });
 		if (self._onBeforeLoad) {
 			self._onBeforeLoad();
 		}
@@ -61,9 +62,11 @@ QuotesDatabase.prototype = {
 	},
 	each: function(callback) {
 		var self = this;
-		for (key in self._quotes) {
-			if (self._quotes.hasOwnProperty(key) && callback) {
-				callback(self._quotes[key]);
+		if (callback) {
+			for (key in self._quotes) {
+				if (self._quotes.hasOwnProperty(key)) {
+					callback(key, self._quotes[key]);
+				}
 			}
 		}
 	},	
@@ -71,7 +74,7 @@ QuotesDatabase.prototype = {
 		var self = this;
 		var changed = false;
 		var changes = [];
-		self.each(function(quote) {
+		self.each(function(key, quote) {
 			// migrate quote
 			var oldText = quote['quote'];
 			var newText = $.normalize(quote['quote']);
@@ -133,7 +136,7 @@ QuotesDatabase.prototype = {
 	storeQuote: function(quote, request, response) {
 		var self = this;
 		if (quote && quote['quote']) {
-			var hash = self.hash(quote['quote']);
+			var hash = $.hashCode(quote['quote']);
 			var existingQuote = self._quotes[hash];
 			if (!existingQuote) {
 				self._quotes[hash] = quote;
@@ -150,8 +153,8 @@ QuotesDatabase.prototype = {
 		var self = this;
 		if (self._quotes) {
 			self._cache = {};
-			self.each(function() {
-				self.cacheQuote(self._quotes[key]);
+			self.each(function(key, quote) {
+				self.cacheQuote(quote);
 			});
 		}
 	},
@@ -181,8 +184,8 @@ QuotesDatabase.prototype = {
 	getQuotes: function() {
 		var self = this;
 		var quotes = [];
-		self.each(function(each) {
-			quotes.push(each);
+		self.each(function(key, quote) {
+			quotes.push(quote);
 		});
 		return quotes;
 	},
@@ -190,9 +193,6 @@ QuotesDatabase.prototype = {
 		var self = this;
 		var keys = Object.keys(self._quotes);
 		return self._quotes[keys[Math.floor(keys.length * Math.random())]];
-	},
-	hash: function(string) {
-		return (string || '').replace(/[^a-z0-9]/, '').toLowerCase().hashCode();
 	},
 	merge: function(existingObject, newObject) {
 		var self = this;
@@ -228,7 +228,7 @@ QuotesDatabase.prototype = {
 	size: function() {
 		var self = this;
 		var length = 0;
-		self.each(function() {
+		self.each(function(key, quote) {
 			length++;
 		});
 		return length;

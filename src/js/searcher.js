@@ -66,7 +66,7 @@ QuotesSearcher.prototype = {
 		var self = this;
 		var results = [];
 		if (searchTerms && searchTerms.length > 0) {
-			Quotes.database.each(function(quote) {
+			Quotes.database.each(function(key, quote) {
 				if (self.matchesSearchTerms(searchTerms, quote)) {
 					if (callback) {
 						results.push(quote);

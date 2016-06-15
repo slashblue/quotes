@@ -1,12 +1,3 @@
-String.prototype.hashCode = function() {
-	var hash = 0, i = 0, len = this.length, chr;
-	while ( i < len ) {
-		hash  = ((hash << 5) - hash + this.charCodeAt(i++)) << 0;
-	}
-	return hash;
-};
-
-
 String.prototype.capitalize = function() {
     return this.charAt(0).toUpperCase() + this.slice(1);
 };
@@ -95,7 +86,22 @@ $.isKeyEvent = function(charOrNumber, event) {
 };
 
 
+$.hashCode = function(text) {
+	var hash = '';
+	if (text) {
+		var normalizedText = (text || '').replace(/[^a-zA-Z0-9]/, '').toLowerCase().trimBlanks();
+		var rawHash = CryptoJS.SHA1(normalizedText);
+		$(rawHash.words).each(function(index, each) {
+			if (index === 0) {
+				hash = hash + each;
+			} else {
+				hash = hash + ':' + each;
+			}
+		});
+	}
+	return hash;
+}
+
 $.timestamp = function() {
 	return (new Date()).getTime();
 };
-

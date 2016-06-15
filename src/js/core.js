@@ -44,7 +44,7 @@ Quotes = {
 	},
 	setUpDatabase: function() {
 		var self = this;
-		self.database = new QuotesDatabase();
+		self.database = new QuotesDatabase('./data/db.json');
 		self.database.onChange(function(event) {
 			self.updateStats();
 		});
