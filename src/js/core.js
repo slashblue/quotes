@@ -15,10 +15,10 @@ QuotesUI = {
 		var self = this;
 		self.player = new QuotesPlayer();
 		self.player.onPlay(function(event) {
-			$('#tab-play').addClass('tab-playing').removeClass('tab-resuming');
+			$('#tab-play').addClass('tab-playing');
 		});
 		self.player.onPause(function(event) {
-			$('#tab-play').removeClass('tab-playing').removeClass('tab-resuming');
+			$('#tab-play').removeClass('tab-playing');
 		});
 		self.player.onResume(function(event) {
 			$('#tab-play').addClass('tab-resuming');
@@ -37,7 +37,7 @@ QuotesUI = {
 		self.player.onReady(function(nextQuote, event){
 			self.appendQuote(nextQuote, $('#quote').empty());
 			if ($('#quote').is(':visible')) {
-				this.play(event);
+				self.player.play(event);
 			}
 		});
 		self.player.setUp();
@@ -57,7 +57,7 @@ QuotesUI = {
 		var self = this;
 		self.fetcher = new QuotesFetcher();
 		self.fetcher.onHandleQuote(function(quote, request, response) {
-			self.database.storeQuote(quote, request, response)
+			self.database.addQuote(quote, request, response)
 		});
 		self.fetcher.onFetchFinished(function(request, response) {
 			self.database.save(request, response);
@@ -67,34 +67,36 @@ QuotesUI = {
 	setUpSearcher: function() {
 		var self = this;
 		self.searcher = new QuotesSearcher();
-		self.searcher.onBeforeSearch(function(event) {
+		self.searcher.onBeforeSearch(function(searchTerm, searchTerms, event) {
 			QuotesEditors.detach(null);
 			$('#quotes').empty();
 		});
-		self.searcher.onSearch(function(quote, event) {
+		self.searcher.onSearch(function(quote, searchTerm, searchTerms, event) {
 			var node = $('<li class="quote"></li>')
 			self.appendQuote(quote, node);
 			$('#quotes').append(node);
 		});
-		self.searcher.onEmptySearch(function(event){
+		self.searcher.onEmptySearch(function(searchTerm, searchTerms, event){
 			self.updateStats([]);
 		});
-		self.searcher.onAfterSearch(function(quotes, event){
+		self.searcher.onAfterSearch(function(quotes, searchTerm, searchTerms, event){
 			self.updateStats(quotes);
 		});
 		self.searcher.setUp();
+		$('#searchText').on('keyup.quotes', function(event) {
+			self.searcher.search($('#searchText').val(), event);
+		});
+		$('#tab-search').on('click.quotes', function(event) {
+			$('#searchText').focus();
+		});
+
 	},
 	setUpControl: function() {
 		var self = this;
 		$('.tab').on('click.quotes', function(event) {
 			var tab = $(this);
 			if (tab.hasClass('tab-active')) {
-				// todo
-				if (self.player.isSuspended()) {
-					self.player.toggle(event);
-				} else {
-					self.player.resume(event);
-				}
+				self.player.toggle(event);
 			} else {
 				$('.tab').removeClass('tab-active');
 				$('.tab-content').removeClass('tab-content-active');
@@ -149,6 +151,12 @@ QuotesUI = {
 				self.editable(nodeSource, new QuotesStringEditor(nodeSource), quote, quote.setSource);
 				jqNode.append(nodeSource);
 			}
+			var buttonDelete = $('<a class="delete">x</a>');
+			buttonDelete.on('click.editor', function(event) {
+				self.database.removeQuote(quote);
+				jqNode.remove();
+			});
+			buttonDelete.appendTo(jqNode);
 		}
 	},
 	editable: function(jqNode, editor, quote, callback) {

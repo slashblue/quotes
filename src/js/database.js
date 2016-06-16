@@ -107,17 +107,26 @@ QuotesDatabase.prototype = {
 			}
 		}
 	},
-	storeQuote: function(quote, request, response) {
+	addQuote: function(quote, request, response) {
 		var self = this;
 		if (quote && quote.isValid()) {
 			var existingQuote = self.matchingQuote(quote);
-			if (existingQuote && existingQuote.merge(quote)) {
-				self.changed({ 'merge': [ existingQuote ] });
+			if (existingQuote) {
+				if (existingQuote.merge(quote)) {
+					self.changed({ 'merge': [ existingQuote ] });
+				}
 			} else {
 				self._quotes.push(quote);
-				self.changed({ 'new': [ quote ] });
+				self.changed({ 'add': [ quote ] });
 			}
-		}	
+		}
+	},
+	removeQuote: function(quote, event) {
+		var self = this;
+		if (quote) {
+			self._quotes = $.grep(self._quotes, function(each) { return !(quote === each); });
+			self.changed({ 'remove': [ quote ] });
+		}
 	},
 	matchingQuote: function(quote) {
 		var self = this;

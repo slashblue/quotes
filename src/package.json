@@ -1,11 +1,26 @@
 {
-  "name": "your-app",
+  "name": "Quotes",
   "version": "0.1.0",
-  "scripts": {
-    "start": "electron main.js"
+  "description": "",
+  "license": "MIT",
+  "author": {
+    "name": "Stefan Reichhart",
+    "email": "stefan.reichhart@gmail.com",
+    "url": ""
   },
+  "scripts": {
+    "test": "xo",
+    "start": "electron main.js",
+    "build": "electron-packager . --out=dist --app-version=$npm_package_version --prune --asar --overwrite --all"
+  },
+  "files": [
+    "js/*.js",
+    "css/*.css",
+    "data/*.json"
+  ],
   "devDependencies": {
-    "electron-packager": "^7.0.3",
+    "electron-debug": "^1.0.0",
+    "electron-packager": "^7.0.4",
     "electron-prebuilt": "^1.2.0"
   },
   "dependencies": {

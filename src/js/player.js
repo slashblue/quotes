@@ -3,6 +3,7 @@ QuotesPlayer = function() {
 	this._playedQuotesIndex = -1;
 	this._playedIntervall = 10 * 1000;
 	this._timerPlayer = null;
+	this._timerPlaying = null;
 	this._onReady = function(currentQuote, event) {};
 	this._onPlay = function(currentQuote, event) {};
 	this._onResume = function(event) {};
@@ -24,9 +25,13 @@ QuotesPlayer.prototype = {
 		var self = this;
 		return !!self._timerPlayer;
 	},
+	isPlaying: function() {
+		var self = this;
+		return !!self._timerPlaying;
+	},
 	toggle: function(event) {
 		var self = this;
-		if (self.isSuspended()) {
+		if (!self.isPlaying()) {
 			self.play(event);
 		} else {
 			self.pause(event);
@@ -34,21 +39,25 @@ QuotesPlayer.prototype = {
 	},
 	play: function(event) {
 		var self = this;
+		self._timerPlaying = true;
+		self.next(event);
+		self.nextDelayed(event);
 		var currentQuote = self.currentQuote();
-		self.next();
 		if (self._onPlay) {
 			self._onPlay(currentQuote, event);
 		}
 	},
 	resume: function(event) {
 		var self = this;
-		self.nextDelayed();
+		self._timerPlaying = true;
+		self.nextDelayed(event);
 		if (self._onResume) {
 			self._onResume(event);
 		}
 	},
 	suspend: function(event) {
 		var self = this;
+		self._timerPlaying = false;
 		window.clearTimeout(self._timerPlayer);
 		if (self._onSuspend) {
 			self._onSuspend(event);
@@ -56,11 +65,12 @@ QuotesPlayer.prototype = {
 	},
 	pause: function(event) {
 		var self = this;
+		self._timerPlaying = false;
 		window.clearTimeout(self._timerPlayer);
 		self._timerPlayer = null;
 		var currentQuote = self.currentQuote();
-		if (self._onPlay) {
-			self._onPlay(currentQuote, event);
+		if (self._onPause) {
+			self._onPause(currentQuote, event);
 		}
 	},
 	next: function(event) {
@@ -73,8 +83,9 @@ QuotesPlayer.prototype = {
 	},
 	nextDelayed: function(event) {
 		var self = this;
+		self._timerPlaying = true;
 		window.clearTimeout(self._timerPlayer);
-		self._timerPlayer = window.setTimeout(function() {
+		self._timerPlayer = window.setInterval(function() {
 			self.next(event);
 		}, self._playedIntervall);
 	},
