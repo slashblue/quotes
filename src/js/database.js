@@ -4,6 +4,7 @@ QuotesDatabase = function(path) {
 	this._quotes = [];
 	this._requests = [];
 	this._lastChange = null;
+	this._timerSave = null;
 	this._onBeforeLoad = function() {};
 	this._onAfterLoad = function() {};
 	this._onBeforeSave = function() {};
@@ -25,17 +26,18 @@ QuotesDatabase.prototype = {
 		}
 		if (self._db && self._db.get) {
 			self._quotes = Quotes.read(self._db.get('quotes').value());
-			self._requests = self._db.get('requests').value() || self.newRequests();
+			self._requests = QuotesRequests.read(self._db.get('requests').value());
 			if (self._quotes.length == 0 || self._requests.length == 0) {
 				if (self._onNew) {
 					self._onNew();
-					self._lastChange = (new Date()).getTime();
+					self._lastChange = $.timestamp();
 					self.save();
 				}
 			}
 			self.migrate();
 		} else {
 			self._quotes = Quotes.create();
+			self._requests = QuotesRequests.create();
 		}
 		if (self._onAfterLoad) {
 			self._onAfterLoad();
@@ -61,9 +63,6 @@ QuotesDatabase.prototype = {
 		var self = this;
 		self._onAfterSave = callback;
 	},
-	newRequests: function() {
-		return [];
-	},
 	migrate: function() {
 		var self = this;
 		var changes = [];
@@ -85,10 +84,17 @@ QuotesDatabase.prototype = {
 	},
 	changed: function(changes) {
 		var self = this;
-		self._lastChange = (new Date()).getTime();
+		self._lastChange = $.timestamp();
 		if (self._onChange) {
 			self._onChange(changes);
 		}
+	},
+	saveDelayed: function(request, response) {
+		var self = this;
+		window.clearTimeout(self._timerSave);
+		self._timerSave = window.setTimeout(function() {
+			self.save(request, response);
+		}, 1 * 1000);
 	},
 	save: function(request, response) {
 		var self = this;
@@ -98,7 +104,8 @@ QuotesDatabase.prototype = {
 					self._onBeforeSave();
 				}
 				self._db.set('quotes', Quotes.write(self._quotes)).value();
-				self._db.set('requests', (QuotesUI.fetcher ? QuotesUI.fetcher.getRequests() : [])).value();
+				// TODO -> fetcherS
+				self._db.set('requests', (QuotesUI.fetcher ? QuotesUI.fetcher.forJSON() : [])).value();
 				self._db.write();
 				self._lastChange = null;
 				if (self._onAfterSave) {
@@ -132,7 +139,7 @@ QuotesDatabase.prototype = {
 		var self = this;
 		var found = null;
 		self.eachQuote(function(index, each) {
-			if (each.equals(quote)) {
+			if (!found && each.equals(quote)) {
 				found = each;
 			}
 		});

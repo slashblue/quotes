@@ -2,16 +2,13 @@ String.prototype.capitalize = function() {
     return this.charAt(0).toUpperCase() + this.slice(1);
 };
 
-
 String.prototype.trimBlanks = function() {
 	return this.replace(/^\s*/ig, '').replace(/\s*$/ig, '');
 };
 
-
 $.allSatisfy = function(array, callback) {
 	return array && $.grep(array, function(each) { return callback(each); }).length === array.length;
 };
-
 
 $.unique = function(list) {
 	var result = [];
@@ -25,7 +22,6 @@ $.unique = function(list) {
 	return result;
 };
 
-
 $.normalize = function(text) {
 	return (text || '')
 			.replace(/[^a-zA-Z0-9ÀÁÂÃÄÅàáâãäåĀāąĄæÇçćĆčČđĐďĎÈÉÊËèéêëěĚĒēęĘÌÍÎÏìíîïĪīłŁÑñňŇńŃÒÓÔÕÕÖØòóôõöøŌōřŘŠšśŚťŤÙÚÛÜùúûüůŮŪūŸÿýÝŽžżŻźŹ.,:;?!\-='¿´_%&/()+*°§$£€… ]/, '')
@@ -35,11 +31,9 @@ $.normalize = function(text) {
 			.trimBlanks();
 };
 
-
 $.normalizeList = function(list) {
 	return $.unique($.grep($(list).map(function(index, each) { return $.normalize(each); }).toArray(), function(each) { return each && each.length > 0; })).sort();
 };
-
 
 $.normalizeHtml = function(html) {
 	return $.normalize((html || '')
@@ -47,7 +41,6 @@ $.normalizeHtml = function(html) {
 			.replace(/&nbsp;/ig, ' ')
 			.replace(/\s\s+/ig, ' '));
 };
-
 
 $.isSameArray = function(array1, array2) {
 	if ((!array1 && array2) || (array1 && !array2)) {
@@ -72,7 +65,6 @@ $.isSameArray = function(array1, array2) {
 	return true;
 };
 
-
 $.isKeyEvent = function(charOrNumber, event) {
 	if (event) {
 		if (typeof charOrNumber === 'number') {
@@ -84,7 +76,6 @@ $.isKeyEvent = function(charOrNumber, event) {
 	}
 	return false;
 };
-
 
 $.hashCode = function(text) {
 	var hash = '';
@@ -104,4 +95,12 @@ $.hashCode = function(text) {
 
 $.timestamp = function() {
 	return (new Date()).getTime();
+};
+
+$.swapNameFragments = function(text) {
+	var fragments = text.split(',');
+	if (fragments && fragments.length === 2) {
+		return $.normalize(fragments[1]) + ' ' + $.normalize(fragments[0]);
+	}
+	return text;
 };
