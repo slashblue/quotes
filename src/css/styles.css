@@ -47,6 +47,7 @@ body {
 }
 
 .quote {
+	position: relative;
 	width: 100%;
 	float: left;
 	padding: 10px;
@@ -90,6 +91,7 @@ body {
 .quote:hover {
 	background-color: #efefef;
 }
+
 .tab {
 	display: inline;
 	text-align: center;
@@ -97,6 +99,7 @@ body {
 	margin: 5px;
 	border: 1px solid lightgray;
 }
+
 .tab-active {
 	font-color: bold ;
 	background-color: lightgray;	
@@ -110,17 +113,21 @@ body {
 	margin-top: 3px;
 	border-top: 1px solid lightgray;
 }
+
 .tab-content-active {
 	display: block;
 }
+
 #quote {
 	width: 100%;
 	padding: 0 40px 0 40px;
 	float: left;
 }
+
 .nav {
 	width: 100%;
 }
+
 #previousQuote,
 #nextQuote {
 	text-align: center;
@@ -129,16 +136,20 @@ body {
 	width: 40px;
 	z-index: 1;
 }
+
 #previousQuote {
 	left: 0;
 }
+
 #nextQuote {
 	right: 0px;
 }
+
 #tabs > ul {
 	display: block;
 	text-align: center;
 }
+
 #tabs > ul > li {
 	display: inline-block;
 	text-align: center;
@@ -187,6 +198,26 @@ body {
 #tab-play:after {
 	content: ' || ';
 }
+
 #tab-play.tab-playing:after {
 	content: ' > ';
+}
+
+.delete {
+	display: none;
+	position: absolute;
+	top: -13px;
+	right: 10px;
+	border: 1px solid black;
+	border-radius: 20px;
+	padding: 2px 8px 4px 8px;
+	background-color: #efefef;
+}
+
+.quote:hover .delete {
+	display: block;
+}
+
+.delete:hover {
+	font-style: bold;
 }
