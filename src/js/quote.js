@@ -2,17 +2,11 @@ Quotes = {
 	create: function() {
 		return [];
 	},
-	// TODO: not necessary
 	read: function(array) {
-		return $(array || []).map(function(index, each) {
-			return new QuoteFromDB(each);
-		}).toArray();
+		return $($.grep($(array || []), function(each) { return !!each; })).map(function(index, each) { return new Quote().fromJSON(each); }).toArray();
 	},
-	// TODO: not necessary
 	write: function(array) {
-		return $(array || []).map(function(index, each) {
-			return each.data;
-		}).toArray();
+		return $($.grep($(array || []), function(each) { return !!each; })).map(function(index, each) { return each.forJSON(); }).toArray();
 	}
 };
 
@@ -76,12 +70,11 @@ Quote.prototype = {
 		this.data['safe'] = !!safe;
 	},
 	addKeyword: function(keyword) {
-		var self = this;
 		if (keyword) {
 			var trimmedKeyword = keyword.trimBlanks();
 			if (trimmedKeyword) {
-				if (!self.includesKeyword(trimmedKeyword)) {
-					self.getKeywords().push(trimmedKeyword);
+				if (!this.includesKeyword(trimmedKeyword)) {
+					this.getKeywords().push(trimmedKeyword);
 				}
 			}
 		}
@@ -107,12 +100,11 @@ Quote.prototype = {
 		return found;
 	},
 	equals: function(quote) {
-		var self = this;
-		return self.type == quote.type
-				&& (self === quote 
-					|| self == quote 
-					|| self.getHashCode() == quote.getHashCode()
-					|| (self.getText() == quote.getText() && self.getAuthor() == quote.getAuthor()));
+		return this.type == quote.type
+				&& (this === quote 
+					|| this == quote 
+					|| this.getHashCode() == quote.getHashCode()
+					|| (this.getText() == quote.getText() && this.getAuthor() == quote.getAuthor()));
 	},
 	isValid: function() {
 		return this.data['text'] 
@@ -198,13 +190,11 @@ Quote.prototype = {
 			return true;
 		}
 		return false;
+	},
+	fromJSON(data) {
+		this.data = data;
+	},
+	forJSON() {
+		return this.data;
 	}
 };
-
-QuoteFromDB = function(data) {
-	this.type = 'quote';
-	this.data = data;
-};
-
-QuoteFromDB.prototype = {};
-$.extend(QuoteFromDB.prototype, Quote.prototype);
