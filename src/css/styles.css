@@ -88,6 +88,12 @@ body {
 	float: left;
 }
 
+.quote-url {
+	font-size: 0.8em;
+	float: left;
+	color: gray;
+	width: 100%;
+}
 .quote:hover {
 	background-color: #efefef;
 }
@@ -203,21 +209,36 @@ body {
 	content: ' > ';
 }
 
-.delete {
-	display: none;
+.controls {
 	position: absolute;
 	top: -13px;
 	right: 10px;
-	border: 1px solid black;
-	border-radius: 20px;
-	padding: 2px 8px 4px 8px;
-	background-color: #efefef;
+	display: none;
 }
 
-.quote:hover .delete {
+.quote:hover .controls {
 	display: block;
 }
 
-.delete:hover {
+.control {
+	position: relative;
+	float: left;
+	border: 1px solid black;
+	border-radius: 10px;
+	padding: 2px 8px 4px 8px;
+	background-color: #efefef;
+	margin-left: 10px;
+}
+
+
+.control:hover {
 	font-style: bold;
+}
+
+.save {
+	display: none;
+}
+
+.dirty-child .save {
+	display: block;
 }

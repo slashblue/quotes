@@ -77,6 +77,10 @@ $.isKeyEvent = function(charOrNumber, event) {
 	return false;
 };
 
+$.isSafeText = function(text) {
+	return !(text || '').match(/&\w+;/ig);
+};
+
 $.hashCode = function(text) {
 	var hash = '';
 	if (text) {

@@ -4,14 +4,15 @@ Quotes = {
 	},
 	read: function(array) {
 		return $($.grep($(array || []), function(each) { return !!each; })).map(function(index, each) { return new Quote().fromJSON(each); }).toArray();
+		
 	},
 	write: function(array) {
 		return $($.grep($(array || []), function(each) { return !!each; })).map(function(index, each) { return each.forJSON(); }).toArray();
 	}
 };
 
-Quote = function(text, author, keywords, source, language, timestamp, safe) {
-	this.type = 'quote';
+Quote = function(text, author, keywords, source, language, timestamp, safe, url) {
+	this.type = 'Quote';
 	this.data = {};
 	this.setText(text);
 	this.setAuthor(author);
@@ -20,9 +21,13 @@ Quote = function(text, author, keywords, source, language, timestamp, safe) {
 	this.setLanguage(language);
 	this.setTimestamp(timestamp);
 	this.setSafe(safe);
+	this.setUrl(url);
+	return this;
 };
 
 Quote.prototype = {
+	setUp: function() {
+	},
 	setText: function(text) {
 		this.data['text'] = text;
 		this.data['hashCode'] = $.hashCode(text);
@@ -69,6 +74,18 @@ Quote.prototype = {
 	setSafe: function(safe) {
 		this.data['safe'] = !!safe;
 	},
+	getUrl: function() {
+		return this.data['url'];
+	},
+	setUrl: function(url) {
+		this.data['url'] = url;
+	},
+	getDomain: function() {
+		if (this.getUrl()) {
+			return this.getUrl().replace(/http(s)?:\/\//, '').split('/')[0];
+		}
+		return '';
+	},
 	addKeyword: function(keyword) {
 		if (keyword) {
 			var trimmedKeyword = keyword.trimBlanks();
@@ -80,19 +97,16 @@ Quote.prototype = {
 		}
 	},
 	removeKeyword: function(keyword) {
-		var self = this;
-		self.setKeywords($.grep(self.getKeywords(), function(each) { return each != keyword; }));
+		this.setKeywords($.grep(this.getKeywords(), function(each) { return each != keyword; }));
 	},
 	eachKeyword: function(callback) {
-		var self = this;
-		$(self.getKeywords()).each(function(index, each) {
+		$(this.getKeywords()).each(function(index, each) {
 			callback(index, each);
 		});
 	},
 	includesKeyword: function(keyword) {
-		var self = this;
 		var found = false;
-		self.eachKeyword(function(index, each) {
+		this.eachKeyword(function(index, each) {
 			if (!found && keyword == each || $.normalize(keyword) == $.normalize(each)) {
 				found = true;
 			}
@@ -113,35 +127,33 @@ Quote.prototype = {
 				&& this.getHashCode();
 	},
 	migrate: function() {
-		var self = this;
 		var changed = false;
 		// migrate quote
-		var oldText = self.getText();
+		var oldText = this.getText();
 		var newText = $.normalize(oldText);
 		if (oldText != newText) {
-			self.setText(newText);
+			this.setText(newText);
 			changed = true;
 		}
 		// migrate safe state
-		var oldUnsafe = self.getSafe();
+		var oldUnsafe = this.getSafe();
 		var newUnsafe = !!oldUnsafe;
 		if (oldUnsafe != newUnsafe) {
-			self.setSafe(newUnsafe);
+			this.setSafe(newUnsafe);
 			changed = true;
 		}
 		// migrate keywords
-		var oldKeywords = self.getKeywords() || [];
+		var oldKeywords = this.getKeywords() || [];
 		var newKeywords = $.grep(oldKeywords, function(keyword) { return keyword && $.normalize(keyword); });
 		if (oldKeywords.length != newKeywords.length) {
-			self.setKeywords(newKeywords);
+			this.setKeywords(newKeywords);
 			changed = true;
 		}
 		return changed;
 	},
 	merge: function(quote) {
-		var self = this;
 		var merged = false;
-		var existingData = self.data;
+		var existingData = this.data;
 		var newData = quote.data;
 		for (key in newData) {
 			if (newData.hasOwnProperty(key) && key != 'timestamp') {
@@ -173,26 +185,29 @@ Quote.prototype = {
 		this.setTimestamp($.timestamp());
 	},
 	matchesSearchTerm: function(callback) {
-		var self = this;
-		if (self.getText() && callback(self.getText())) {
+		if (this.getText() && callback(this.getText())) {
 			return true;
 		}
-		if (self.getAuthor() && callback(self.getAuthor())) {
+		if (this.getAuthor() && callback(this.getAuthor())) {
 			return true;
 		}
-		if (self.getSource() && callback(self.getSource())) {
+		if (this.getSource() && callback(this.getSource())) {
 			return true;
 		}
-		if (self.getLanguage() && callback(self.getLanguage())) {
+		if (this.getLanguage() && callback(this.getLanguage())) {
 			return true;
 		}
-		if (self.getKeywords() && $.grep(self.getKeywords(), function(eachKeyword) { return callback(eachKeyword); }).length > 0) {
+		if (this.getKeywords() && $.grep(this.getKeywords(), function(eachKeyword) { return callback(eachKeyword); }).length > 0) {
+			return true;
+		}
+		if (this.getUrl() && callback(this.getUrl())) {
 			return true;
 		}
 		return false;
 	},
 	fromJSON(data) {
 		this.data = data;
+		return this;
 	},
 	forJSON() {
 		return this.data;

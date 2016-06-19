@@ -1,4 +1,5 @@
 QuotesDatabase = function(path) {
+	this.type = 'QuotesDatabase';
 	this._db = null;
 	this._path = path,
 	this._quotes = [];
@@ -10,83 +11,103 @@ QuotesDatabase = function(path) {
 	this._onBeforeSave = function() {};
 	this._onAfterSave = function() {};
 	this._onChange = function(changes) {};
+	this._onLoadError = function(error) {};
+	this._onReady = function() {};
 	this._onNew = function() {}
 };
 
 QuotesDatabase.prototype = {
 	setUp: function() {
-		var self = this;
-		self.load();
+		this.load();
 	},
 	load: function() {
-		var self = this;
-		self._db = low(self._path, { storage: require('lowdb/lib/file-async') });
-		if (self._onBeforeLoad) {
-			self._onBeforeLoad();
+		logger.log('debug', 'QuotesDatabase.onLoad', { 'path': this._path });
+		this._db = low(this._path, { storage: require('lowdb/lib/file-async') });
+		if (this._db && this._db.get) {
+			if (this._onBeforeLoad) {
+				logger.log('debug', 'QuotesDatabase.onBeforeLoad', { 'path': this.path });
+				this._onBeforeLoad();
+			}		
+			this._load();
+			if (this._onAfterLoad) {
+				logger.log('debug', 'QuotesDatabase.onAfterLoad', { 'path': this.path });
+				this._onAfterLoad();
+			}
+		} else {
+			logger.log('error', 'QuotesDatabase.onLoad', { 'path': this.path });
+			this._quotes = Quotes.create();
+			this._requests = QuotesRequests.create();
+		}	
+		if (this._onReady) {
+			logger.log('debug', 'QuotesDatabase.onReady');
+			this._onReady();
 		}
-		if (self._db && self._db.get) {
-			self._quotes = Quotes.read(self._db.get('quotes').value());
-			self._requests = QuotesRequests.read(self._db.get('requests').value());
-			if (self._quotes.length == 0 || self._requests.length == 0) {
-				if (self._onNew) {
-					self._onNew();
-					self._lastChange = $.timestamp();
-					self.save();
+	},
+	_load: function() {
+		try {
+			logger.log('debug', 'QuotesDatabase.onLoad', { 'path': this.path });
+			this._quotes = Quotes.read(this._db.get('quotes').value());
+			this._requests = QuotesRequests.read(this._db.get('requests').value());
+			if (this._quotes.length == 0 || this._requests.length == 0) {
+				if (this._onNew) {
+					logger.log('debug', 'QuotesDatabase.onNew', { 'path': this.path });
+					this._onNew();
+					this._lastChange = $.timestamp();
+					this.save();
 				}
 			}
-			self.migrate();
-		} else {
-			self._quotes = Quotes.create();
-			self._requests = QuotesRequests.create();
-		}
-		if (self._onAfterLoad) {
-			self._onAfterLoad();
+			this.migrate();
+		} catch (error) {
+			logger.log('error', 'QuotesDatabase.onLoadError', { 'error': error, 'path': this.path });
+			if (this._onLoadError) {
+				this._onLoadError(error);
+			}
 		}
 	},
 	onChange: function(callback) {
-		var self = this;
-		self._onChange = callback;
+		this._onChange = callback;
 	},
 	onBeforeLoad: function(callback) {
-		var self = this;
-		self._onBeforeLoad = callback;
+		this._onBeforeLoad = callback;
 	},
 	onAfterLoad: function(callback) {
-		var self = this;
-		self._onAfterLoad = callback;
+		this._onAfterLoad = callback;
 	},
 	onBeforeSave: function(callback) {
-		var self = this;
-		self._onBeforeSave = callback;
+		this._onBeforeSave = callback;
 	},
 	onAfterSave: function(callback) {
-		var self = this;
-		self._onAfterSave = callback;
+		this._onAfterSave = callback;
+	},
+	onLoadError: function(callback) {
+		this._onLoadError = callback; 
+	},
+	onReady: function(callback) {
+		this._onReady = callback; 
 	},
 	migrate: function() {
-		var self = this;
 		var changes = [];
-		self.eachQuote(function(index, quote) {
+		this.eachQuote(function(index, quote) {
+			logger.log('debug', 'QuotesDatabase.onMigrate', { 'quote': quote, 'index': index });
 			if (quote.migrate()) {
 				changes.push(quote);
 			}
 		});
 		if (changes && changes.length > 0) {
-			self.changed({ 'migrate': changes });
-			self.save(null, null);
+			this.changed({ 'migrate': changes });
+			this.save(null, null);
 		}
 	},
 	eachQuote: function(callback) {
-		var self = this;
-		$(self.getQuotes()).each(function(index, each) {
+		$(this.getQuotes()).each(function(index, each) {
 			callback(index, each);
 		});
 	},
 	changed: function(changes) {
-		var self = this;
-		self._lastChange = $.timestamp();
-		if (self._onChange) {
-			self._onChange(changes);
+		this._lastChange = $.timestamp();
+		if (this._onChange) {
+			logger.log('debug', 'QuotesDatabase.onChange', { 'changes': changes });
+			this._onChange(changes);
 		}
 	},
 	saveDelayed: function(request, response) {
@@ -97,67 +118,63 @@ QuotesDatabase.prototype = {
 		}, 1 * 1000);
 	},
 	save: function(request, response) {
-		var self = this;
-		if (self._lastChange) {
-			if (self._db && self._db.set) {
-				if (self._onBeforeSave) {
-					self._onBeforeSave();
+		if (this._lastChange) {
+			if (this._db && this._db.set) {
+				if (this._onBeforeSave) {
+					logger.log('debug', 'QuotesDatabase.onBeforeSave');
+					this._onBeforeSave();
 				}
-				self._db.set('quotes', Quotes.write(self._quotes)).value();
+				this._db.set('quotes', Quotes.write(this._quotes)).value();
 				// TODO -> fetcherS
-				self._db.set('requests', (QuotesUI.fetcher ? QuotesUI.fetcher.forJSON() : [])).value();
-				self._db.write();
-				self._lastChange = null;
-				if (self._onAfterSave) {
-					self._onAfterSave();
+				this._db.set('requests', (QuotesUI.fetcher ? QuotesUI.fetcher.forJSON() : [])).value();
+				this._db.write();
+				this._lastChange = null;
+				if (this._onAfterSave) {
+					logger.log('debug', 'QuotesDatabase.onAfterSave');
+					this._onAfterSave();
 				}
 			}
 		}
 	},
 	addQuote: function(quote, request, response) {
-		var self = this;
 		if (quote && quote.isValid()) {
-			var existingQuote = self.matchingQuote(quote);
+			var existingQuote = this.matchingQuote(quote);
 			if (existingQuote) {
 				if (existingQuote.merge(quote)) {
-					self.changed({ 'merge': [ existingQuote ] });
+					this.changed({ 'merge': [ existingQuote ] });
 				}
 			} else {
-				self._quotes.push(quote);
-				self.changed({ 'add': [ quote ] });
+				this._quotes.push(quote);
+				this.changed({ 'add': [ quote ] });
 			}
 		}
 	},
 	removeQuote: function(quote, event) {
-		var self = this;
 		if (quote) {
-			self._quotes = $.grep(self._quotes, function(each) { return !(quote === each); });
-			self.changed({ 'remove': [ quote ] });
+			this._quotes = $.grep(this._quotes, function(each) { return !(quote === each); });
+			this.changed({ 'remove': [ quote ] });
 		}
 	},
 	matchingQuote: function(quote) {
-		var self = this;
 		var found = null;
-		self.eachQuote(function(index, each) {
+		this.eachQuote(function(index, each) {
 			if (!found && each.equals(quote)) {
 				found = each;
+				return false;
 			}
 		});
 		return found;
 	},
 	includesQuote: function(quote) {
-		var self = this;
-		return !!self.matchingQuote(quote);
+		return !!this.matchingQuote(quote);
 	},
 	getQuotes: function() {
 		return this._quotes;
 	},
 	getRandomQuote: function() {
-		var self = this;
-		return self.getQuotes()[Math.floor(self.size() * Math.random())];
+		return this.getQuotes()[Math.floor(this.size() * Math.random())];
 	},
 	size: function() {
-		var self = this;
-		return self.getQuotes().length;
+		return this.getQuotes().length;
 	}
 }

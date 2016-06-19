@@ -1,7 +1,8 @@
 QuotesPlayer = function() {
+	this.type = 'QuotesPlayer';
+	this.playedInterval = 10 * 1000;
 	this._playedQuotes = [];
 	this._playedQuotesIndex = -1;
-	this._playedIntervall = 10 * 1000;
 	this._timerPlayer = null;
 	this._timerPlaying = null;
 	this._onReady = function(currentQuote, event) {};
@@ -15,70 +16,67 @@ QuotesPlayer = function() {
 
 QuotesPlayer.prototype = {
 	setUp: function() {
-		var self = this;
-		var currentQuote = self.nextQuote(0);
-		if (self._onReady) {
-			self._onReady(currentQuote, event);
+		var currentQuote = this.nextQuote(0);
+		if (this._onReady) {
+			logger.log('debug', 'QuotesPlayer.onReady', { 'quote': currentQuote });
+			this._onReady(currentQuote, event);
 		}
 	},
 	isSuspended: function() {
-		var self = this;
-		return !!self._timerPlayer;
+		return !!this._timerPlayer;
 	},
 	isPlaying: function() {
-		var self = this;
-		return !!self._timerPlaying;
+		return !!this._timerPlaying;
 	},
 	toggle: function(event) {
-		var self = this;
-		if (!self.isPlaying()) {
-			self.play(event);
+		if (!this.isPlaying()) {
+			this.play(event);
 		} else {
-			self.pause(event);
+			this.pause(event);
 		}
 	},
 	play: function(event) {
-		var self = this;
-		self._timerPlaying = true;
-		self.next(event);
-		self.nextDelayed(event);
-		var currentQuote = self.currentQuote();
-		if (self._onPlay) {
-			self._onPlay(currentQuote, event);
+		this._timerPlaying = true;
+		this.next(event);
+		this.nextDelayed(event);
+		var currentQuote = this.currentQuote();
+		if (this._onPlay) {
+			logger.log('debug', 'QuotesPlayer.onPlay', { 'quote': currentQuote });
+			this._onPlay(currentQuote, event);
 		}
 	},
 	resume: function(event) {
-		var self = this;
-		self._timerPlaying = true;
-		self.nextDelayed(event);
-		if (self._onResume) {
-			self._onResume(event);
+		this._timerPlaying = true;
+		this.nextDelayed(event);
+		if (this._onResume) {
+			logger.log('debug', 'QuotesPlayer.onResume');
+			this._onResume(event);
 		}
 	},
 	suspend: function(event) {
-		var self = this;
-		self._timerPlaying = false;
-		window.clearTimeout(self._timerPlayer);
-		if (self._onSuspend) {
-			self._onSuspend(event);
+		this._timerPlaying = false;
+		window.clearTimeout(this._timerPlayer);
+		if (this._onSuspend) {
+			logger.log('debug', 'QuotesPlayer.onSuspend');
+			this._onSuspend(event);
 		}
 	},
 	pause: function(event) {
-		var self = this;
-		self._timerPlaying = false;
-		window.clearTimeout(self._timerPlayer);
-		self._timerPlayer = null;
-		var currentQuote = self.currentQuote();
-		if (self._onPause) {
-			self._onPause(currentQuote, event);
+		this._timerPlaying = false;
+		window.clearTimeout(this._timerPlayer);
+		this._timerPlayer = null;
+		var currentQuote = this.currentQuote();
+		if (this._onPause) {
+			logger.log('debug', 'QuotesPlayer.onPause', { 'quote': currentQuote });
+			this._onPause(currentQuote, event);
 		}
 	},
 	next: function(event) {
-		var self = this
-		var previousQuote = self.currentQuote();
-		var nextQuote = self.nextQuote(1);
-		if (self._onNext) {
-			self._onNext(nextQuote, previousQuote, event);
+		var previousQuote = this.currentQuote();
+		var nextQuote = this.nextQuote(1);
+		if (this._onNext) {
+			logger.log('debug', 'QuotesPlayer.onNext', { 'previousQuote': previousQuote, 'nextQuote': nextQuote });
+			this._onNext(nextQuote, previousQuote, event);
 		}
 	},
 	nextDelayed: function(event) {
@@ -87,64 +85,55 @@ QuotesPlayer.prototype = {
 		window.clearTimeout(self._timerPlayer);
 		self._timerPlayer = window.setInterval(function() {
 			self.next(event);
-		}, self._playedIntervall);
+		}, self.playedInterval);
 	},
 	previous: function(event) {
-		var self = this;
-		var previousQuote = self.currentQuote();
-		var nextQuote = self.nextQuote(-1);
-		if (self._onPrevious) {
-			self._onPrevious(nextQuote, previousQuote, event);
+		var previousQuote = this.currentQuote();
+		var nextQuote = this.nextQuote(-1);
+		if (this._onPrevious) {
+			logger.log('debug', 'QuotesPlayer.onPrevious', { 'previousQuote': previousQuote, 'nextQuote': nextQuote });
+			this._onPrevious(nextQuote, previousQuote, event);
 		}
 	},
 	onPlay: function(callback) {
-		var self = this;
-		self._onPlay = callback;
+		this._onPlay = callback;
 	},
 	onResume: function(callback) {
-		var self = this;
-		self._onResume = callback;
+		this._onResume = callback;
 	},
 	onSuspend: function(callback) {
-		var self = this;
-		self._onSuspend = callback;
+		this._onSuspend = callback;
 	},
 	onPause: function(callback) {
-		var self = this;
-		self._onPause = callback;
+		this._onPause = callback;
 	},
 	onNext: function(callback) {
-		var self = this;
-		self._onNext = callback;
+		this._onNext = callback;
 	},
 	onPrevious: function(callback) {
-		var self = this;
-		self._onPrevious = callback;
+		this._onPrevious = callback;
 	},
 	onReady: function(callback) {
-		var self = this;
-		self._onReady = callback;
+		this._onReady = callback;
 	},
 	currentQuote: function() {
-		var self = this;
-		return self._playedQuotes[self._playedQuotesIndex];
+		return this._playedQuotes[this._playedQuotesIndex] || {};
 	},
 	nextQuote: function(offset) {
-		var self = this;
-		var index = Math.max(self._playedQuotesIndex + offset, 0);
-		var quote = self._playedQuotes[index];
+		var index = Math.max(this._playedQuotesIndex + offset, 0);
+		var quote = this._playedQuotes[index];
 		if (QuotesUI.database && QuotesUI.database.size() > 0) {
 			while (!quote) {
 				var pickedQuote = QuotesUI.database ? QuotesUI.database.getRandomQuote() : null;
 				if (pickedQuote) {
-					self._playedQuotes.push(pickedQuote);
+					this._playedQuotes.push(pickedQuote);
 				} else {
 					return null;
 				}
-				quote = self._playedQuotes[index];
+				quote = this._playedQuotes[index];
 			}
 		}
-		self._playedQuotesIndex = index;
+		this._playedQuotesIndex = index;
 		return quote;
 	}
 };

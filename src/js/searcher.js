@@ -1,5 +1,6 @@
 QuotesSearcher = function() {
-	this._searchDelay = 100;
+	this.type = 'QuotesSearcher';
+	this.searchDelay = 100;
 	this._timerSearch = null;
 	this._onSearch = function(quote, searchTerm, searchTerms, event) {};
 	this._onEmptySearch = function(searchTerm, searchTerms, event) {};
@@ -15,26 +16,30 @@ QuotesSearcher.prototype = {
 		window.clearTimeout(self._timerSearch);
 		self._timerSearch = window.setTimeout(function() {
 			self._search(text, event);
-		}, self._searchDelay);		
+		}, self.searchDelay);		
 	},
 	_search: function(searchTerm, event) {
 		var self = this;
 		var searchTerms = self.searchTerms(searchTerm);
 		if (searchTerms && searchTerms.length > 0) {
 			if (self._onBeforeSearch) {
+				//logger.log('debug', 'QuotesSearcher.onBeforeSearch', { 'searchTerm': searchTerm, 'searchTerms': searchTerms });
 				self._onBeforeSearch(searchTerm, searchTerms, event);
 			}
 			var results = self.searchForTerms(searchTerms, function(quote) {
 				if (self._onSearch) {
+					//logger.log('debug', 'QuotesSearcher.onSearch', { 'searchTerm': searchTerm, 'searchTerms': searchTerms, 'quote': quote });
 					self._onSearch(quote, searchTerm, searchTerms, event);
 				}
 			});
 			if (!results || results.length == 0) {
 				if (self._onEmptySearch) {
+					//logger.log('debug', 'QuotesSearcher.onEmptySearch', { 'searchTerm': searchTerm, 'searchTerms': searchTerms, 'results': results });
 					self._onEmptySearch(searchTerm, searchTerms, event);
 				}
 			}
 			if (self._onAfterSearch) {
+				//logger.log('debug', 'QuotesSearcher.onAfterSearch', { 'searchTerm': searchTerm, 'searchTerms': searchTerms, 'results': results });
 				self._onAfterSearch(results, searchTerm, searchTerms, event);
 			}
 			return results;
@@ -42,20 +47,16 @@ QuotesSearcher.prototype = {
 		return [];
 	},
 	onSearch: function(callback) {
-		var self = this;
-		self._onSearch = callback;
+		this._onSearch = callback;
 	},
 	onEmptySearch: function(callback) {
-		var self = this;
-		self._onEmptySearch = callback;
+		this._onEmptySearch = callback;
 	},
 	onAfterSearch: function(callback) {
-		var self = this;
-		self._onAfterSearch = callback;
+		this._onAfterSearch = callback;
 	},
 	onBeforeSearch: function(callback) {
-		var self = this;
-		self._onBeforeSearch = callback;
+		this._onBeforeSearch = callback;
 	},
 	searchForTerms: function(searchTerms, callback) {
 		var self = this;
@@ -73,7 +74,6 @@ QuotesSearcher.prototype = {
 		return results;
 	},
 	searchTerms: function(text) {
-		var self = this;
 		return $.grep($((text || '').split(' ')).map(function(index, each) { return each.trimBlanks(); }).toArray(), function(substring) { return substring.length > 0; });
 
 	},
@@ -83,6 +83,7 @@ QuotesSearcher.prototype = {
 		$(searchTerms).each(function(index, searchTerm) {
 			if (continueSearch && !self.matchesSearchTerm(searchTerm, quote)) {
 				continueSearch = false;
+				return false;
 			}
 		});
 		return continueSearch;
@@ -97,7 +98,6 @@ QuotesSearcher.prototype = {
 		return false;
 	},
 	matchesSubstring(searchTerm, text) {
-		var self = this;
 		return searchTerm && text && (text.indexOf(searchTerm) >= 0 || text.toLowerCase().indexOf(searchTerm.toLowerCase()) >= 0);
 	}
 };

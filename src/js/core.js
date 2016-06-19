@@ -4,12 +4,11 @@ QuotesUI = {
 	searcher: null,
 	player: null,
 	setUp: function() {
-		var self = this;
-		self.setUpDatabase();
-		self.setUpFetcher();
-		self.setUpSearcher();
-		self.setUpPlayer();
-		self.setUpControl();
+		try {
+			this.setUpDatabase();
+		} catch (error) {
+			logger.log('error', 'QuotesUI.setUp');
+		}
 	},
 	setUpPlayer: function() {
 		var self = this;
@@ -51,6 +50,12 @@ QuotesUI = {
 		self.database.onAfterLoad(function(event) {
 			self.updateStats();
 		});
+		self.database.onReady(function() {
+			self.setUpFetcher();
+			self.setUpPlayer();
+			self.setUpSearcher();
+			self.setUpControl();
+		});
 		self.database.setUp();
 	},
 	setUpFetcher: function() {
@@ -61,9 +66,6 @@ QuotesUI = {
 		});
 		self.fetcher.onAfterFetch(function(request, response) {
 			self.database.saveDelayed(request, response);
-		});
-		self.fetcher.onHandleUnsafeQuote(function(quote) {
-			console.log([ '--- POSSIBLE ERROR --- ', quote ]);
 		});
 		self.fetcher.register('http://www.brainyquote.com/quotes_of_the_day.html', 1 * 60 * 60 * 1000, function(request, response, handler) {
 			$(response).find('.bqQt').each(function(indexNode, eachNode) {
@@ -235,7 +237,7 @@ QuotesUI = {
 		$('#tab-search').on('click.quotes', function(event) {
 			$('#searchText').focus();
 		});
-
+		self.searcher.setUp();
 	},
 	setUpControl: function() {
 		var self = this;
@@ -297,12 +299,25 @@ QuotesUI = {
 				self.editable(nodeSource, new QuotesStringEditor(nodeSource), quote, quote.setSource);
 				jqNode.append(nodeSource);
 			}
-			var buttonDelete = $('<a class="delete">x</a>');
+			if (quote.getUrl()) {
+				var nodeUrl = $('<a class="quote-url" href="' + quote.getUrl() + '" target="_blank">© ' + quote.getDomain() + '</a>');
+				jqNode.append(nodeUrl);
+			}
+			var controls = $('<div class="controls"></div>');
+			var buttonSave = $('<a class="control save">save</a>');
+			buttonSave.on('click.editor', function(event) {
+				QuotesEditors.each(function(each) {
+					each.save();
+				}, jqNode) ;
+			});
+			buttonSave.appendTo(controls);
+			var buttonDelete = $('<a class="control delete">delete</a>');
 			buttonDelete.on('click.editor', function(event) {
 				self.database.removeQuote(quote);
 				jqNode.remove();
 			});
-			buttonDelete.appendTo(jqNode);
+			buttonDelete.appendTo(controls);
+			controls.appendTo(jqNode);
 		}
 	},
 	editable: function(jqNode, editor, quote, callback) {
@@ -327,12 +342,11 @@ QuotesUI = {
 		editor.attach();
 	},
 	updateStats: function(results) {
-		var self = this;
 		var text = '';
 		if (results) {
-			text = 'Displaying ' + results.length + ' of ' + self.database.size() + ' quotes';
+			text = 'Displaying ' + results.length + ' of ' + this.database.size() + ' quotes';
 		} else {
-			text = self.database.size() + ' quotes available';
+			text = this.database.size() + ' quotes available';
 		}
 		$('#stats').empty().text(text);
 	}

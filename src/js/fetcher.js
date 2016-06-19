@@ -1,43 +1,48 @@
 QuotesFetcher = function() {
-	this._interval = 5 * 60 * 1000;
+	this.type = 'QuotesFetcher';
+	this.delayStart = 250;
+	this.delayInterval = 5 * 60 * 1000; // every 5 minutes
 	this._specs = [];
 	this._requests = [];
-	this._timer = null;
+	this._timerStart = null;
+	this._timerInterval = null;
 	this._onHandleQuote = function(quote, request, response) {};
+	this._onHandleUnsafeQuote = function(quote, request, response) {};
 	this._onAfterFetch = function(request, response) {};
-	this._onFetchAborted = function(url, interval, callback) {};
+	this._onFetchAborted = function(request) {};
 	this._onBeforeFetch = function(request) {};
 };
 
 QuotesFetcher.prototype = {
+	setUp: function() {
+		var self = this;
+		window.clearInterval(this._timerStart);
+		self._timerStart = window.setTimeout(function() {
+			self.fetchSpecs();
+		}, self.delayStart);
+	},
+	start: function() {
+		var self = this;
+		if (!self._timerInterval) {		
+			self._timerInterval = window.setInterval(function() {
+				self.fetchSpecs();
+			}, self.delayInterval);
+		}
+	},
+	stop: function() {
+		window.clearInterval(this._timerInterval);
+		this._timerInterval = null;
+	},
 	register: function(urls, interval, callback) {
 		var self = this;
-		self.schedule(function() {
+		self._specs.push(function() {
 			self.fetch(urls, interval, function(request, response) {
 				callback(request, response, function(text, author, keywords, source, language, safe) {
 					self.handle(text, author, keywords, source, language, safe, request, response);
 				});
 			});
 		});
-	},
-	setUp: function() {
-		var self = this;
-		window.setTimeout(function() {
-			self.fetchSpecs();
-		}, 100);
-	},
-	schedule: function(callback) {
-		var self = this;
-		self.unschedule();
-		self._specs.push(callback);
-		self._timer = window.setInterval(function() {
-			self.fetchSpecs();
-		}, self._interval);
-	},
-	unschedule: function() {
-		var self = this;
-		window.clearInterval(self._timer);
-		self._timer = null;
+		self.start();
 	},
 	fetchSpecs: function() {
 		var self = this;
@@ -46,43 +51,43 @@ QuotesFetcher.prototype = {
 		});
 	},
 	fetch: function(urlOrUrls, interval, callback) {
-		var self = this;
 		if (urlOrUrls) {
-			if (typeof urlOrUrls ===  "string") {
-				self.fetchOne(urlOrUrls, interval, callback);
+			if (typeof urlOrUrls ===  'string') {
+				this.fetchOne(urlOrUrls, interval, callback);
 			} else {
-				if (typeof urlOrUrls ===  "object") {
-					self.fetchAll(urlOrUrls, interval, callback);
+				if (typeof urlOrUrls ===  'object') {
+					this.fetchAll(urlOrUrls, interval, callback);
 				} else {
-					console.log("invalid url: " + urlOrUrls);
+					logger.log('warn', 'QuotesFetcher.fetch', { 'urlOrUrls': urlOrUrls, 'interval': interval });
 				}
 			}
 		}
 	},
 	fetchOne: function(url, interval, callback) {
-		var self = this;
-		if (self.canFetchUrl(url, interval, callback)) {
-			var request = new QuotesRequest(url, interval, callback);
-			self._requests.push(request);
-			request.onBefore(function() {
-				if (self._onBeforeFetch) {
-					self._onBeforeFetch(request);
-				}
-			});
-			request.onSuccess(function() {
-				if (self._onAfterFetch) {
-					self._onAfterFetch(request, request.response);
-				}
-			});
-			request.onError(function(error) {
-				console.log(error);
-			});
-			request.get();
+		var request = this.newRequest(url, interval, callback);
+		if (this.canFetch(request)) {
+			this._requests.push(request);
+			if (this._onBeforeFetch) {
+				logger.log('debug', 'QuotesFetcher.onBeforeFetch', { 'url': url, 'interval': interval });
+				this._onBeforeFetch(request);
+			}
+			request.getHtml();
 		} else {
-			if (self._onFetchAborted) {
-				self._onFetchAborted(url, interval, callback);
+			if (this._onFetchAborted) {
+				logger.log('debug', 'QuotesFetcher.onFetchAborted', { 'url': url, 'interval': interval });
+				this._onFetchAborted(request);
 			}
 		}
+	},
+	newRequest: function(url, interval, callback) {
+		var request = new QuotesRequest(url, interval, callback);
+		request.onSuccess(function() {
+			if (this._onAfterFetch) {
+				logger.log('debug', 'QuotesFetcher.onAfterFetch', { 'url': url, 'interval': interval });
+				this._onAfterFetch(request, request.response);
+			}
+		});
+		return request;
 	},
 	fetchAll: function(urls, interval, callback) {
 		var self = this;
@@ -90,16 +95,15 @@ QuotesFetcher.prototype = {
 			self.fetchOne(each, interval, callback);
 		});
 	},
-	canFetchUrl: function(url, interval, callback) {
-		var self = this;
-		if (!url || !callback) {
+	canFetch: function(request) {
+		if (!request.url || !request.callback) {
 			return false;
 		}
-		if (interval && interval > 0 && self._requests) {
-			for (i = self._requests.length - 1; i >= 0; i--) {
-				var request = self._requests[i];
-				if (request && request.url == url) {
-					if (request.timestamp && request.timestamp + interval > $.timestamp()) {
+		if (request.interval && request.interval > 0 && this._requests && this._requests.length > 0) {
+			for (i = this._requests.length - 1; i >= 0; i--) {
+				var existingRequest = this._requests[i];
+				if (existingRequest && existingRequest.url == request.url) {
+					if (existingRequest.timestamp && existingRequest.timestamp + existingRequest.interval > $.timestamp()) {
 						return false;
 					}
 				}
@@ -113,6 +117,9 @@ QuotesFetcher.prototype = {
 	onHandleUnsafeQuote: function(callback) {
 		this._onHandleUnsafeQuote = callback;
 	},
+	onBeforeFetch: function(callback) {
+		this._onBeforeFetch = callback;
+	},
 	onAfterFetch: function(callback) {
 		this._onAfterFetch = callback;
 	},
@@ -120,29 +127,28 @@ QuotesFetcher.prototype = {
 		this._onFetchAborted = callback;
 	},
 	handle: function(text, author, keywords, source, language, safe, request, response) {
-		var self = this;
 		if (text) {
-			var quote = new Quote(text, author, keywords, source, language, ((request && request.timestamp ? request.timestamp : null) || $.timestamp()), safe);
+			var quote = new Quote(text, author, keywords, source, language, ((request && request.timestamp ? request.timestamp : null) || $.timestamp()), safe, request.url);
 			if (request) {
 				request['quotes'].push(quote);
 			}
-			if (self.isSafe(text) && self.isSafe(author) && $.allSatisfy(keywords, function(each) { return self.isSafe(each); })) {
-				if (self._onHandleQuote) {
-					self._onHandleQuote(quote, request, response);
+			if ($.isSafeText(text) && $.isSafeText(author) && $.allSatisfy(keywords, function(each) { return $.isSafeText(each); }) && $.isSafeText(source) && $.isSafeText(language)) {
+				if (this._onHandleQuote) {
+					logger.log('debug', 'QuotesFetcher.onHandleQuote', { 'text': text, 'author': author, 'keywords': keywords, 'source': source, 'language': language, 'safe': safe });
+					this._onHandleQuote(quote, request, response);
 				}
 			} else {
-				if (self._onHandleUnsafeQuote) {
-					self._onHandleUnsafeQuote(quote, request, response);
+				if (this._onHandleUnsafeQuote) {
+					logger.log('debug', 'QuotesFetcher.onHandleUnsafeQuote', { 'text': text, 'author': author, 'keywords': keywords, 'source': source, 'language': language, 'safe': safe });
+					this._onHandleUnsafeQuote(quote, request, response);
 				}
 			}
 		}
 	},
-	isSafe: function(text) {
-		return !text.match(/&\w+;/ig);
-	},
 	forJSON: function() {
-		var self = this;
-		return $(self._requests).map(function(indexRequest, eachRequest) { return eachRequest.forJSON(); }).toArray();
+		return $(this._requests).map(function(indexRequest, eachRequest) { 
+			return eachRequest.forJSON(); 
+		}).toArray();
 	},
 
 };

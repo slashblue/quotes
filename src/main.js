@@ -1,9 +1,11 @@
 const electron = require('electron')
 const low = require('lowdb')
 const fileAsync = require('lowdb/lib/file-async')
+const logger = require('winston');  
 
 // Module to control application life.
 const app = electron.app
+
 // Module to create native browser window.
 const BrowserWindow = electron.BrowserWindow
 
