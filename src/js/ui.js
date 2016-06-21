@@ -85,7 +85,7 @@ QuotesUI = {
 				handler(text, author, keywords, null, 'en', true, request, response);
 			});
 		});
-		self.fetcher.register('url', 'interval', function(request, response, handler) {
+		self.fetcher.register([ "http://www.quotationspage.com/qotd.html", "http://www.quotationspage.com/mqotd.html", "http://www.quotationspage.com/random.php3" ], 1 * 60 * 60 * 1000, function(request, response, handler) {
 			$(response).find('#content > dl > dt.quote').each(function(indexNode, eachNode) {
 				var nodeQuote = $(eachNode);
 				var text = $.normalize(nodeQuote.find("a").text());
