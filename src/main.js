@@ -2,6 +2,10 @@ const electron = require('electron')
 const low = require('lowdb')
 const fileAsync = require('lowdb/lib/file-async')
 const logger = require('winston');  
+const loggerRotate = require('winston-logrotate');
+const db = low('./data/db.json', {
+  storage: fileAsync
+})
 
 // Module to control application life.
 const app = electron.app
@@ -57,6 +61,8 @@ app.on('activate', function () {
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
 
-const db = low('./data/db.json', {
-  storage: fileAsync
-})
+
+global.settings = {
+  log: './logs/app.log',
+  db: './data/db.json'
+}

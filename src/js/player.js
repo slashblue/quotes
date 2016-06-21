@@ -5,6 +5,7 @@ QuotesPlayer = function() {
 	this._playedQuotesIndex = -1;
 	this._timerPlayer = null;
 	this._timerPlaying = null;
+	this._onPick = function() { return null; };
 	this._onReady = function(currentQuote, event) {};
 	this._onPlay = function(currentQuote, event) {};
 	this._onResume = function(event) {};
@@ -116,22 +117,25 @@ QuotesPlayer.prototype = {
 	onReady: function(callback) {
 		this._onReady = callback;
 	},
+	onPick: function(callback) {
+		this._onPick = callback;
+	},
 	currentQuote: function() {
 		return this._playedQuotes[this._playedQuotesIndex] || {};
 	},
 	nextQuote: function(offset) {
 		var index = Math.max(this._playedQuotesIndex + offset, 0);
 		var quote = this._playedQuotes[index];
-		if (QuotesUI.database && QuotesUI.database.size() > 0) {
-			while (!quote) {
-				var pickedQuote = QuotesUI.database ? QuotesUI.database.getRandomQuote() : null;
-				if (pickedQuote) {
-					this._playedQuotes.push(pickedQuote);
-				} else {
-					return null;
-				}
-				quote = this._playedQuotes[index];
+		while (!quote) {
+			var pickedQuote = null;
+			if (this._onPick) {
+				pickedQuote = this._onPick();
 			}
+			if (!pickedQuote) {
+				return null;
+			}
+			this._playedQuotes.push(pickedQuote);
+			quote = this._playedQuotes[index];
 		}
 		this._playedQuotesIndex = index;
 		return quote;

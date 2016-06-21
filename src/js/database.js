@@ -13,7 +13,8 @@ QuotesDatabase = function(path) {
 	this._onChange = function(changes) {};
 	this._onLoadError = function(error) {};
 	this._onReady = function() {};
-	this._onNew = function() {}
+	this._onNew = function() {};
+	this._onWriteRequests = function(requests) {};
 };
 
 QuotesDatabase.prototype = {
@@ -22,22 +23,28 @@ QuotesDatabase.prototype = {
 	},
 	load: function() {
 		logger.log('debug', 'QuotesDatabase.onLoad', { 'path': this._path });
-		this._db = low(this._path, { storage: require('lowdb/lib/file-async') });
-		if (this._db && this._db.get) {
-			if (this._onBeforeLoad) {
-				logger.log('debug', 'QuotesDatabase.onBeforeLoad', { 'path': this.path });
-				this._onBeforeLoad();
-			}		
-			this._load();
-			if (this._onAfterLoad) {
-				logger.log('debug', 'QuotesDatabase.onAfterLoad', { 'path': this.path });
-				this._onAfterLoad();
-			}
+		if (this._path) {
+			this._db = low(this._path, { storage: require('lowdb/lib/file-async') });
+			if (this._path && this._db && this._db.get) {
+				if (this._onBeforeLoad) {
+					logger.log('debug', 'QuotesDatabase.onBeforeLoad', { 'path': this._path });
+					this._onBeforeLoad();
+				}		
+				this._load();
+				if (this._onAfterLoad) {
+					logger.log('debug', 'QuotesDatabase.onAfterLoad', { 'path': this._path });
+					this._onAfterLoad();
+				}
+			} else {
+				logger.log('error', 'QuotesDatabase.onLoad', { 'path': this._path });
+				this._quotes = Quotes.create();
+				this._requests = QuotesRequests.create();
+			}	
 		} else {
-			logger.log('error', 'QuotesDatabase.onLoad', { 'path': this.path });
+			logger.log('warn', 'QuotesDatabase.onLoad', { 'path': this._path });
 			this._quotes = Quotes.create();
 			this._requests = QuotesRequests.create();
-		}	
+		}
 		if (this._onReady) {
 			logger.log('debug', 'QuotesDatabase.onReady');
 			this._onReady();
@@ -45,12 +52,12 @@ QuotesDatabase.prototype = {
 	},
 	_load: function() {
 		try {
-			logger.log('debug', 'QuotesDatabase.onLoad', { 'path': this.path });
+			logger.log('debug', 'QuotesDatabase.onLoad', { 'path': this._path });
 			this._quotes = Quotes.read(this._db.get('quotes').value());
 			this._requests = QuotesRequests.read(this._db.get('requests').value());
 			if (this._quotes.length == 0 || this._requests.length == 0) {
 				if (this._onNew) {
-					logger.log('debug', 'QuotesDatabase.onNew', { 'path': this.path });
+					logger.log('debug', 'QuotesDatabase.onNew', { 'path': this._path });
 					this._onNew();
 					this._lastChange = $.timestamp();
 					this.save();
@@ -58,7 +65,7 @@ QuotesDatabase.prototype = {
 			}
 			this.migrate();
 		} catch (error) {
-			logger.log('error', 'QuotesDatabase.onLoadError', { 'error': error, 'path': this.path });
+			logger.log('error', 'QuotesDatabase.onLoadError', { 'error': error, 'path': this._path });
 			if (this._onLoadError) {
 				this._onLoadError(error);
 			}
@@ -84,6 +91,9 @@ QuotesDatabase.prototype = {
 	},
 	onReady: function(callback) {
 		this._onReady = callback; 
+	},
+	onWriteRequests: function(callback) {
+		this._onWriteRequests = callback; 
 	},
 	migrate: function() {
 		var changes = [];
@@ -126,7 +136,12 @@ QuotesDatabase.prototype = {
 				}
 				this._db.set('quotes', Quotes.write(this._quotes)).value();
 				// TODO -> fetcherS
-				this._db.set('requests', (QuotesUI.fetcher ? QuotesUI.fetcher.forJSON() : [])).value();
+				this._db.set('requests', function(requests) {
+					if (this._onWriteRequests) {
+						this._onWriteRequests(requests);
+					}
+					return requests;
+				}([])).value();
 				this._db.write();
 				this._lastChange = null;
 				if (this._onAfterSave) {

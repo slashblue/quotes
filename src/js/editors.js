@@ -20,10 +20,34 @@ QuotesEditors = {
 	},
 	each: function(callback, jqNode) {
 		if (callback) {
-			(jqNode ? $(jqNode.find('.editor')) : $('.editor')).each(function(index, each) {
-				var editor = $(each).parent().data('editor');
-				if (editor) {
-					callback(editor);
+			$(this.getEditors(jqNode)).each(function(index, each) {
+				callback(each);
+			});
+		}
+	},
+	getEditors: function(jqNode) {
+		return $.grep($(jqNode ? $(jqNode.find('.editor')) : $('.editor')).map(function(index, each) { return $(each).parent().data('editor'); }).toArray(), function(each) { return !!each; });
+	},
+	isEditing: function(jqNode) {
+		return $.anySatisfy(this.getEditors(jqNode), function(index, each) {
+			return each.isEditing();
+		});
+	},
+	isDirty: function(jqNode) {
+		return $.anySatisfy(this.getEditors(jqNode), function(index, each) {
+			return each.isDirty();
+		});
+	},
+	highlight: function(jqNode) {
+		var highlightables = $.grep(this.getEditors(jqNode), function(each) { return each.isDirty(); });
+		if (highlightables) {
+			var node = $(highlightables[0]._node);
+			$(window).scrollTo(node, 1000, { 
+				over: -0.5,
+				onAfter: function() { 
+					if (node.effect) {
+						node.effect('highlight'); 
+					}
 				}
 			});
 		}
@@ -83,8 +107,14 @@ QuotesStringEditor.prototype = {
 				self._onFocus(event);
 			}
 		});
+		$(document).on('keydown.editor', function(event) {
+			if (event.keyCode == 27) {
+				self.abort(event);
+			}
+		});
 	},
 	tearDown: function() {
+		$(document).off('keydown.editor');
 		this._node.off();
 		this.stop();
 	},
@@ -176,6 +206,9 @@ QuotesStringEditor.prototype = {
 	},
 	isEditing: function() {
 		return !!this._editor;
+	},
+	isDirty: function() {
+		return this.hasChanged();
 	},
 	hasChanged: function() {
 		return this.isEditing() && this.getOriginalText() != this.getCurrentText();

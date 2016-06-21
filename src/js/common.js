@@ -7,7 +7,27 @@ String.prototype.trimBlanks = function() {
 };
 
 $.allSatisfy = function(array, callback) {
-	return array && $.grep(array, function(each) { return callback(each); }).length === array.length;
+	if (array) {
+		for (index in array) {
+			if (!callback(index, array[index])) {
+				return false;
+			}
+		}
+		return true
+	}
+	return false;
+};
+
+$.anySatisfy = function(array, callback) {
+	if (array) {
+		for (index in array) {
+			if (callback(index, array[index])) {
+				return true;
+			}
+		}
+		return false;
+	}
+	return false;
 };
 
 $.unique = function(list) {

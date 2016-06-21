@@ -132,7 +132,7 @@ QuotesFetcher.prototype = {
 			if (request) {
 				request['quotes'].push(quote);
 			}
-			if ($.isSafeText(text) && $.isSafeText(author) && $.allSatisfy(keywords, function(each) { return $.isSafeText(each); }) && $.isSafeText(source) && $.isSafeText(language)) {
+			if ($.isSafeText(text) && $.isSafeText(author) && $.allSatisfy(keywords, function(index, each) { return $.isSafeText(each); }) && $.isSafeText(source) && $.isSafeText(language)) {
 				if (this._onHandleQuote) {
 					logger.log('debug', 'QuotesFetcher.onHandleQuote', { 'text': text, 'author': author, 'keywords': keywords, 'source': source, 'language': language, 'safe': safe });
 					this._onHandleQuote(quote, request, response);
@@ -145,10 +145,9 @@ QuotesFetcher.prototype = {
 			}
 		}
 	},
-	forJSON: function() {
-		return $(this._requests).map(function(indexRequest, eachRequest) { 
-			return eachRequest.forJSON(); 
-		}).toArray();
-	},
-
+	eachRequest: function(callback) {
+		$(this._requests).each(function(index, each) {
+			callback(index, each);
+		});
+	}
 };
