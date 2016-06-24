@@ -6,7 +6,7 @@ if (winston && winston.Logger) {
 			}),
 			(logrotate && logrotate.Rotate) ? 
 				(new logrotate.Rotate({
-					file: Settings ? Settings.getLogFilePath() : './fatal.log', 
+					file: Settings ? Settings.getLogFilePath() : '/fatal.log', 
 					timestamp: true,
 					max: '100m',
 					keep: 7,
@@ -14,7 +14,7 @@ if (winston && winston.Logger) {
 					level: 'info' 
 				})) : 
 				(new (winston.transports.File)({
-					filename: Settings ? Settings.getLogFilePath() : './fatal.log', 
+					filename: Settings ? Settings.getLogFilePath() : '/fatal.log', 
 					level: 'info'
 				}))
 		]

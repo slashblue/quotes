@@ -1,5 +1,5 @@
 {
-  "name": "Quotes",
+  "name": "quotes",
   "version": "0.1.0",
   "description": "",
   "license": "MIT",
@@ -8,6 +8,7 @@
     "email": "stefan.reichhart@gmail.com",
     "url": ""
   },
+  "main": "main.js",
   "scripts": {
     "test": "xo",
     "start": "electron main.js",
@@ -19,6 +20,7 @@
     "data/*.json"
   ],
   "devDependencies": {
+    "appdirectory": "^0.1.0",
     "electron-debug": "^1.0.0",
     "electron-packager": "^7.0.4",
     "electron-prebuilt": "^1.2.0"
