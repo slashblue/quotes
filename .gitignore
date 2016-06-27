@@ -3,6 +3,7 @@
 *.json
 **/node_modules
 *.app
+**/Quotes-*
 
 # osx
 *DS_Store
