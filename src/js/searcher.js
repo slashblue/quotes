@@ -1,16 +1,24 @@
 QuotesSearcher = function() {
-	this.type = 'QuotesSearcher';
-	this.searchDelay = 100;
-	this._timerSearch = null;
-	this._onEach = function(index, quote) {};
-	this._onSearch = function(quote, searchTerm, searchTerms, event) {};
-	this._onEmptySearch = function(searchTerm, searchTerms, event) {};
-	this._onBeforeSearch = function(searchTerm, searchTerms, event) {};
-	this._onAfterSearch = function(results, searchTerm, searchTerms, event) {};
+	this.initialize();
+	return this;
 };
 
 QuotesSearcher.prototype = {
+	initialize: function() {
+		this.type = 'QuotesSearcher';
+		this.searchDelay = 100;
+		this._timerSearch = null;
+		this._onEach = function(index, quote) {};
+		this._onSearch = function(quote, searchTerm, searchTerms, event) {};
+		this._onEmptySearch = function(searchTerm, searchTerms, event) {};
+		this._onBeforeSearch = function(searchTerm, searchTerms, event) {};
+		this._onAfterSearch = function(results, searchTerm, searchTerms, event) {};
+	},
 	setUp: function() {
+	},
+	tearDown: function() {
+		window.clearTimeout(this._timerSearch);
+		this.initialize();
 	},
 	search: function(text, event) {
 		var self = this;

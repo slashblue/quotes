@@ -56,12 +56,14 @@ body {
 }
 
 .quote-text {
+	position: relative;
 	width: 100%;
 	float: left;
 	text-align: justify;
 	margin: 10px 0px 10px 0px;
 }
 .quote-author {
+	position: relative;
 	float: right;
 	font-style: italic;
 	margin: 5px 0px 5px 0px;
@@ -72,6 +74,7 @@ body {
 }
 
 .quote-keywords {
+	position: relative;
 	width: 100%;
 	float: left;
 	padding: 2px;
@@ -80,6 +83,7 @@ body {
 }
 
 .quote-keyword {
+	position: relative;
 	padding: 2px 4px 2px 4px;
 	margin: 5px;
 	border: 1px solid lightgray;
@@ -89,6 +93,7 @@ body {
 }
 
 .quote-url {
+	position: relative;
 	font-size: 0.8em;
 	float: left;
 	color: gray;
@@ -125,6 +130,7 @@ body {
 }
 
 #quote {
+	position: relative;
 	width: 100%;
 	padding: 0 40px 0 40px;
 	float: left;
@@ -151,12 +157,13 @@ body {
 	right: 0px;
 }
 
-#tabs > ul {
+#tabs {
 	display: block;
 	text-align: center;
+	position: relative;
 }
 
-#tabs > ul > li {
+#tabs > li {
 	display: inline-block;
 	text-align: center;
 }
@@ -241,4 +248,26 @@ body {
 
 .dirty-child .save {
 	display: block;
+}
+
+.desktop .nav,
+.desktop .tab,
+.desktop .tab-content-search {
+	visibility: hidden !important;
+}
+
+.desktop.darwin #tabs {
+	margin-top: 24px; /* compensate for title bar */
+}
+
+.desktop .tab-content {
+	border-top: none !important;
+}
+
+#quote .quote-text {
+	font-size: 1.5em;
+}
+
+#quote .quote-author {
+	font-size: 1.25em;
 }

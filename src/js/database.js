@@ -1,28 +1,37 @@
 QuotesDatabase = function(path) {
-	this.type = 'QuotesDatabase';
-	this._db = null;
-	this._path = path,
-	this._quotes = [];
-	this._requests = [];
-	this._lastChange = null;
-	this._timerSave = null;
-	this._onBeforeLoad = function() {};
-	this._onAfterLoad = function() {};
-	this._onBeforeSave = function() {};
-	this._onAfterSave = function() {};
-	this._onChange = function(changes) {};
-	this._onLoadError = function(error) {};
-	this._onReady = function() {};
-	this._onNew = function() {};
-	this._onWriteRequests = function(requests) {};
+	this.initialize(path);
+	return this;
 };
 
 QuotesDatabase.prototype = {
+	initialize: function(path) {
+		this.type = 'QuotesDatabase';
+		this.delaySave = 1 * 1000;
+		this._db = null;
+		this._path = path,
+		this._quotes = [];
+		this._requests = [];
+		this._lastChange = null;
+		this._timerSave = null;
+		this._onBeforeLoad = function() {};
+		this._onAfterLoad = function() {};
+		this._onBeforeSave = function() {};
+		this._onAfterSave = function() {};
+		this._onChange = function(changes) {};
+		this._onLoadError = function(error) {};
+		this._onReady = function() {};
+		this._onNew = function() {};
+		this._onWriteRequests = function(requests) {};
+	},
 	setUp: function() {
 		this.load();
 	},
+	tearDown: function() {
+		this.save();
+		this.initialize(null);
+	},
 	load: function() {
-		logger.log('debug', 'QuotesDatabase.onLoad', { 'path': this._path });
+		logger.log('info', 'QuotesDatabase.onLoad', { 'path': this._path });
 		if (this._path) {
 			this._db = low(this._path, { storage: require('lowdb/lib/file-async') });
 			if (this._path && this._db && this._db.get) {
@@ -37,13 +46,11 @@ QuotesDatabase.prototype = {
 				}
 			} else {
 				logger.log('error', 'QuotesDatabase.onLoad', { 'path': this._path });
-				this._quotes = Quotes.create();
-				this._requests = QuotesRequests.create();
+				this.empty();
 			}	
 		} else {
 			logger.log('warn', 'QuotesDatabase.onLoad', { 'path': this._path });
-			this._quotes = Quotes.create();
-			this._requests = QuotesRequests.create();
+			this.empty();
 		}
 		if (this._onReady) {
 			logger.log('debug', 'QuotesDatabase.onReady');
@@ -52,24 +59,35 @@ QuotesDatabase.prototype = {
 	},
 	_load: function() {
 		try {
-			logger.log('debug', 'QuotesDatabase.onLoad', { 'path': this._path });
+			logger.log('info', 'QuotesDatabase._onLoad', { 'path': this._path });
 			this._quotes = Quotes.read(this._db.get('quotes').value());
 			this._requests = QuotesRequests.read(this._db.get('requests').value());
-			if (this._quotes.length == 0 || this._requests.length == 0) {
-				if (this._onNew) {
-					logger.log('debug', 'QuotesDatabase.onNew', { 'path': this._path });
-					this._onNew();
-					this._lastChange = $.timestamp();
-					this.save();
-				}
+			if (this._quotes.length == 0) {
+				this.new();
+			} else {
+				this.migrate();
 			}
-			this.migrate();
 		} catch (error) {
 			logger.log('error', 'QuotesDatabase.onLoadError', { 'error': error, 'path': this._path });
 			if (this._onLoadError) {
 				this._onLoadError(error);
 			}
 		}
+	},
+	new: function() {
+		logger.log('info', 'QuotesDatabase.onNew', { 'path': this._path });
+		this.empty();
+		if (this._onNew) {
+			logger.log('debug', 'QuotesDatabase.onNew', { 'path': this._path });
+			this._onNew();	
+		}
+		this.save();
+	},
+	empty: function() {
+		logger.log('info', 'QuotesDatabase.onEmpty', { 'path': this._path });
+		this._quotes = Quotes.create();
+		this._requests = QuotesRequests.create();
+		this.changed();
 	},
 	onChange: function(callback) {
 		this._onChange = callback;
@@ -96,20 +114,23 @@ QuotesDatabase.prototype = {
 		this._onWriteRequests = callback; 
 	},
 	migrate: function() {
+		var self = this;
 		var changes = [];
-		this.eachQuote(function(index, quote) {
+		self.eachQuote(function(index, quote) {
 			logger.log('debug', 'QuotesDatabase.onMigrate', { 'quote': quote, 'index': index });
 			if (quote.migrate()) {
 				changes.push(quote);
 			}
 		});
 		if (changes && changes.length > 0) {
-			this.changed({ 'migrate': changes });
-			this.save(null, null);
+			logger.log('info', 'QuotesDatabase.onMigrate');
+			self.changed({ 'migrate': changes });
+			self.save(null, null);
 		}
 	},
 	eachQuote: function(callback) {
-		$(this.getQuotes()).each(function(index, each) {
+		var self = this;
+		$(self.getQuotes()).each(function(index, each) {
 			callback(index, each);
 		});
 	},
@@ -122,13 +143,16 @@ QuotesDatabase.prototype = {
 	},
 	saveDelayed: function(request, response) {
 		var self = this;
+		logger.log('info', 'QuotesDatabase.onSaveDelayed', { 'path': self._path });
 		window.clearTimeout(self._timerSave);
 		self._timerSave = window.setTimeout(function() {
 			self.save(request, response);
-		}, 1 * 1000);
+		}, self.delaySave);
 	},
 	save: function(request, response) {
-		if (this._lastChange) {
+		logger.log('info', 'QuotesDatabase.onSave', { 'path': this._path });
+		var lastChange = this._lastChange;
+		if (lastChange) {
 			if (this._db && this._db.set) {
 				if (this._onBeforeSave) {
 					logger.log('debug', 'QuotesDatabase.onBeforeSave');
@@ -143,10 +167,12 @@ QuotesDatabase.prototype = {
 					return requests;
 				}([])).value();
 				this._db.write();
-				this._lastChange = null;
 				if (this._onAfterSave) {
 					logger.log('debug', 'QuotesDatabase.onAfterSave');
 					this._onAfterSave();
+				}
+				if (lastChange == this._lastChange) {
+					this._lastChange = null;
 				}
 			}
 		}
@@ -171,8 +197,9 @@ QuotesDatabase.prototype = {
 		}
 	},
 	matchingQuote: function(quote) {
+		var self = this;
 		var found = null;
-		this.eachQuote(function(index, each) {
+		self.eachQuote(function(index, each) {
 			if (!found && each.equals(quote)) {
 				found = each;
 				return false;

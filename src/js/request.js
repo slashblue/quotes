@@ -11,24 +11,29 @@ QuotesRequests = {
 };
 
 QuotesRequest = function(url, interval, callback) {
-	this.type = 'QuotesRequest';
-	this.url = url;
-	this.interval = interval || (1 * 60 * 60 * 1000); // hourly by default
-	this.callback = callback;
-	this.timestamp = $.timestamp();
-	this.response = null;
-	this.quotes = [];
-	this.errors = [];
-	this.start = null;
-	this.stop = null;
-	this.duration = 0;
-	this._onError = function(error) {};
-	this._onSuccess = function() {};
+	this.initialize(url, interval, callback);
 	return this;
 };
 
 QuotesRequest.prototype = {
+	initialize: function(url, interval, callback) {
+		this.type = 'QuotesRequest';
+		this.url = url;
+		this.interval = interval || (1 * 60 * 60 * 1000); // hourly by default
+		this.callback = callback;
+		this.timestamp = $.timestamp();
+		this.response = null;
+		this.quotes = [];
+		this.errors = [];
+		this.start = null;
+		this.stop = null;
+		this.duration = 0;
+		this._onError = function(error) {};
+		this._onSuccess = function() {};
+	},
 	setUp: function() {
+	},
+	tearDown: function() {
 	},
 	getHtml: function() {
 		var self = this;
@@ -46,7 +51,7 @@ QuotesRequest.prototype = {
 						self._onSuccess();
 					}
 				} catch (error) {
-					self.handleError(error);
+					self.handleError(error, response);
 				}
 				self.stop = $.timestamp();
 				self.duration = (self.stop || 0) - (self.start || 0);
@@ -61,11 +66,11 @@ QuotesRequest.prototype = {
 	onSuccess: function(callback) {
 		this._onSuccess = callback;
 	},
-	handleError: function(error) {
+	handleError: function(error, response) {
 		this.errors.push(error);
 		if (this._onError) {
 			logger.log('error', 'QuotesRequest.onError', { 'error': error, 'url': this.url });
-			this._onError(error);
+			this._onError(error, response);
 		}
 	},
 	equals: function(request) {

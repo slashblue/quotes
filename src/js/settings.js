@@ -12,5 +12,11 @@ Settings = {
 			console.log('FATAL: unable to get global objectfrom main process');
 			return {};
 		}
+	},
+	isDesktop: function() {
+		return !!this.getGlobal().config.desktop;
+	},
+	isWindow: function() {
+		return !this.isDesktop();
 	}
 };

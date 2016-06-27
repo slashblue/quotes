@@ -3,13 +3,28 @@ QuotesUI = {
 	fetcher: null,
 	searcher: null,
 	player: null,
-	setUp: function() {
+	setUp: function(event) {
 		try {
 			logger.log('info', 'QuotesUI.setUp');
+			this.setUpMode();
 			this.setUpDatabase();
 		} catch (error) {
-			logger.log('error', 'QuotesUI.setUp');
+			logger.log('error', 'QuotesUI.setUp', { 'error': error });
 		}
+	},
+	setUpMode: function() {
+		if (Settings) {
+			var html = $('html');
+			if (Settings.isDesktop()) {
+				html.addClass('desktop');
+			} else {
+				html.removeClass('desktop');
+			}
+			$(Settings.getGlobal().platform || []).each(function(index, each) {
+				html.addClass(each);
+			});
+		}
+
 	},
 	setUpPlayer: function() {
 		var self = this;
@@ -27,18 +42,15 @@ QuotesUI = {
 			$('#tab-play').removeClass('tab-resuming');
 		});
 		self.player.onNext(function(nextQuote, previousQuote, event) {
-			QuotesEditors.detach(null);
-			self.appendQuote(nextQuote, $('#quote').empty());
+			self.replaceQuote(nextQuote, $('#quote'));
 		});
 		self.player.onPrevious(function(nextQuote, previousQuote, event) {
-			QuotesEditors.detach(null);
-			self.appendQuote(nextQuote, $('#quote').empty());
+			self.replaceQuote(nextQuote, $('#quote'));
 		});
 		self.player.onPick(function() {
 			return self.database.getRandomQuote();
 		});
 		self.player.onReady(function(nextQuote, event){
-			self.appendQuote(nextQuote, $('#quote').empty());
 			if ($('#quote').is(':visible')) {
 				self.player.play(event);
 			}
@@ -71,6 +83,9 @@ QuotesUI = {
 		var self = this;
 		self.fetcher = new QuotesFetcher();
 		self.fetcher.onHandleQuote(function(quote, request, response) {
+			self.database.addQuote(quote, request, response);
+		});
+		self.fetcher.onHandleUnsafeQuote(function(quote, request, response) {
 			self.database.addQuote(quote, request, response);
 		});
 		self.fetcher.onAfterFetch(function(request, response) {
@@ -303,6 +318,18 @@ QuotesUI = {
 			$('#searchText').focus();
 		});
 	},
+	tearDown: function(event) {
+		try {
+			logger.log('info', 'QuotesUI.tearDown');
+			this.database.tearDown();
+			this.fetcher.tearDown();
+			this.player.tearDown();	
+			this.searcher.tearDown();
+		} catch (error) {
+			logger.log('error', 'QuotesUI.tearDown', { 'error': error });
+		}
+		
+	},
 	appendQuote: function(quote, jqNode) {
 		var self = this;
 		if (quote) {
@@ -340,15 +367,24 @@ QuotesUI = {
 					each.save();
 				}, jqNode) ;
 			});
-			buttonSave.appendTo(controls);
 			var buttonDelete = $('<a class="control delete">delete</a>');
 			buttonDelete.on('click.editor', function(event) {
 				self.database.removeQuote(quote);
 				jqNode.remove();
 			});
+			buttonSave.appendTo(controls);
 			buttonDelete.appendTo(controls);
 			controls.appendTo(jqNode);
 		}
+	},
+	replaceQuote: function(quote, jqNode) {
+		var self = this;
+		QuotesEditors.detach(null);
+		jqNode.empty();
+		// very strange rendering bug in transparent windows !
+		window.setTimeout(function() {
+			self.appendQuote(quote, jqNode);
+		}, 25);
 	},
 	editable: function(jqNode, editor, quote, callback) {
 		var self = this;
@@ -383,6 +419,11 @@ QuotesUI = {
 };
 
 
-$(document).ready(function() {
-	QuotesUI.setUp();
+$(document).ready(function(event) {
+	QuotesUI.setUp(event);
+});
+
+
+$(window).on('unload', function(event) {
+	QuotesUI.tearDown(event);
 });

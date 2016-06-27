@@ -7,40 +7,38 @@
     </head>
 
     <body>
-        <div id="tabs">
-            <ul>
-                <li><a href="#tabs-1" id="tab-play" class="tab tab-active tab-playing">Play</a></li>
-                <li><a href="#tabs-2" id="tab-search" class="tab">Search</a></li>
-            </ul>
-            <div id="tabs-1" class="tab-content tab-content-active">
-                <div class="nav">
-                    <a id="previousQuote"><</a>
-                    <a id="nextQuote">></a>
-                </div>
-                <div id="quote"></div>
+        <ul id="tabs">
+            <li><a href="#tab-content-1" id="tab-play" class="tab tab-active tab-playing">Play</a></li>
+            <li><a href="#tab-content-2" id="tab-search" class="tab">Search</a></li>
+        </ul>
+        <div id="tab-content-1" class="tab-content tab-content-play tab-content-active">
+            <div class="nav">
+                <a id="previousQuote"><</a>
+                <a id="nextQuote">></a>
             </div>
-            <div id="tabs-2" class="tab-content">
-                <form id="search" default="return false;">
-                    <input id="searchText" type="text">
-                    <p id="stats"></p>
-                </form>
-                <div class="content">
-                    <ul id="quotes"></ul>
-                </div>
-
+            <div id="quote"></div>
+        </div>
+        <div id="tab-content-2" class="tab-content tab-content-search">
+            <form id="search" default="return false;">
+                <input id="searchText" type="text">
+                <p id="stats"></p>
+            </form>
+            <div class="content">
+                <ul id="quotes"></ul>
             </div>
+        </div>
         <script>window.electron = require('electron');</script>
         <script>window.winston = require('winston');</script>
         <script>window.logrotate = require('winston-logrotate');</script>
         <script>window.$ = window.jQuery = require('jquery');</script>
         <script>require('jquery-ui');</script>
         <!--<script>require('jquery.scrollto');</script>-->
-        <script src="https://cdn.jsdelivr.net/jquery.scrollto/2.1.2/jquery.scrollTo.min.js"></script>
+        <script src="./js/external/jquery.scrollTo.min.js"></script>
         <!--<script>require('lodash');</script>-->
         <!-- <script>require('lowdb');</script>-->
-        <script src="https://npmcdn.com/lodash@4/lodash.min.js"></script>
-        <script src="https://npmcdn.com/lowdb/dist/lowdb.min.js"></script>
-        <script src="./js/sha1.js"></script>
+        <script src="./js/external/lodash.min.js"></script>
+        <script src="./js/external/lowdb.min.js"></script>
+        <script src="./js/external/sha1.js"></script>
         <script src="./js/settings.js"></script>
         <script src="./js/logger.js"></script>
         <script src="./js/common.js"></script>

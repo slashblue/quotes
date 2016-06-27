@@ -57,20 +57,23 @@ QuotesEditors.setUp();
 
 
 QuotesStringEditor = function(jqNode) {
-	this.type = 'QuotesStringEditor';
-	this._node = $(jqNode);
-	this._editor = null;
-	this._text = null;
-	this._timerScheduled = null;
-	this._timerState = null;
-	this._onChange = function(event) {};
-	this._onSave = function(event) {};
-	this._onCancel = function(event) {};
+	this.initialize(jqNode);
 	return this;
 };
 
 
 QuotesStringEditor.prototype = {
+	initialize: function(jqNode) {
+		this.type = 'QuotesStringEditor';
+		this._node = $(jqNode);
+		this._editor = null;
+		this._text = null;
+		this._timerScheduled = null;
+		this._timerState = null;
+		this._onChange = function(event) {};
+		this._onSave = function(event) {};
+		this._onCancel = function(event) {};
+	},
 	setUp: function() {
 		var self = this;
 		self._node.hover(function(event) {
@@ -189,7 +192,7 @@ QuotesStringEditor.prototype = {
 						this._save(event);
 						this.clean();
 					} catch (error) {
-						this.fail();
+						this.fail(error);
 					}
 				}
 			}
@@ -243,9 +246,9 @@ QuotesStringEditor.prototype = {
 			self._node.removeClass('success');
 		}, 500);
 	},
-	fail: function() {
+	fail: function(error) {
 		var self = this;
-		logger.log('debug', 'QuotesEditor.fail');
+		logger.log('debug', 'QuotesEditor.fail', { 'error': error });
 		self._node.removeClass('success').addClass('fail');
 		window.clearTimeout(self._timerState);
 		self._timerState = window.setTimeout(function() {

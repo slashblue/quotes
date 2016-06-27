@@ -42,13 +42,29 @@ $.unique = function(list) {
 	return result;
 };
 
+$.unquote = function(text) {
+	var newText = text || '';
+	if (newText.match(/^"/) && newText.match(/"$/)) {
+		newText = newText.replace(/^"/g, '').replace(/"$/g, '')
+	}
+	if (newText.match(/^\'/) && newText.match(/\'$/)) {
+		newText = newText.replace(/^\'/g, '').replace(/\'$/g, '')
+	}
+	if (newText.match(/^“/) && newText.match(/“$/)) {
+		newText = newText.replace(/^“/g, '').replace(/“$/g, '')
+	}
+	return newText;
+};
+
 $.normalize = function(text) {
-	return (text || '')
-			.replace(/[^a-zA-Z0-9ÀÁÂÃÄÅàáâãäåĀāąĄæÇçćĆčČđĐďĎÈÉÊËèéêëěĚĒēęĘÌÍÎÏìíîïĪīłŁÑñňŇńŃÒÓÔÕÕÖØòóôõöøŌōřŘŠšśŚťŤÙÚÛÜùúûüůŮŪūŸÿýÝŽžżŻźŹ.,:;?!\-='¿´_%&/()+*°§$£€… ]/, '')
-			.replace('ß', 'ss')
-			.replace('"', '')
-			.replace('“', '')
-			.trimBlanks();
+	return $.unquote((text || '')
+			.replace(/\r+/g, ' ') // cr
+			.replace(/\t+/g, ' ') // tabs
+			.replace('ß', 'ss') // double s
+			.replace('“', '"') // other double quotes
+			.replace(/[^a-zA-Z0-9ÀÁÂÃÄÅàáâãäåĀāąĄæÇçćĆčČđĐďĎÈÉÊËèéêëěĚĒēęĘÌÍÎÏìíîïĪīłŁÑñňŇńŃÒÓÔÕÕÖØòóôõöøŌōřŘŠšśŚťŤÙÚÛÜùúûüůŮŪūŸÿýÝŽžżŻźŹ.,:;?!\-='¿´’"_%&/()+*°§$£€…\n ]/, '')
+			.replace(/\s\s+/g, ' ')
+			.trimBlanks());
 };
 
 $.normalizeList = function(list) {

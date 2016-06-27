@@ -97,16 +97,19 @@ Quote.prototype = {
 		}
 	},
 	removeKeyword: function(keyword) {
-		this.setKeywords($.grep(this.getKeywords(), function(each) { return each != keyword; }));
+		var self = this;
+		self.setKeywords($.grep(self.getKeywords(), function(each) { return each != keyword; }));
 	},
 	eachKeyword: function(callback) {
-		$(this.getKeywords()).each(function(index, each) {
+		var self = this;
+		$(self.getKeywords()).each(function(index, each) {
 			callback(index, each);
 		});
 	},
 	includesKeyword: function(keyword) {
+		var self = this;
 		var found = false;
-		this.eachKeyword(function(index, each) {
+		self.eachKeyword(function(index, each) {
 			if (!found && keyword == each || $.normalize(keyword) == $.normalize(each)) {
 				found = true;
 			}

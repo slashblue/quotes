@@ -20,12 +20,13 @@
     "data/*.json"
   ],
   "devDependencies": {
-    "appdirectory": "^0.1.0",
+    "electron": "^0.4.1",
     "electron-debug": "^1.0.0",
     "electron-packager": "^7.0.4",
     "electron-prebuilt": "^1.2.0"
   },
   "dependencies": {
+    "appdirectory": "^0.1.0",
     "electron-json-storage": "^2.0.0",
     "jquery": "^3.0.0",
     "jquery-ui": "^1.10.5",

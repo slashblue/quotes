@@ -1,27 +1,35 @@
 QuotesPlayer = function() {
-	this.type = 'QuotesPlayer';
-	this.playedInterval = 10 * 1000;
-	this._playedQuotes = [];
-	this._playedQuotesIndex = -1;
-	this._timerPlayer = null;
-	this._timerPlaying = null;
-	this._onPick = function() { return null; };
-	this._onReady = function(currentQuote, event) {};
-	this._onPlay = function(currentQuote, event) {};
-	this._onResume = function(event) {};
-	this._onSuspend = function(event) {};
-	this._onPause = function(currentQuote, event) {};
-	this._onNext = function(nextQuote, previousQuote, event) {};
-	this._onPrevious = function(nextQuote, previousQuote, event) {};
+	this.initialize();
+	return this;
 };
 
 QuotesPlayer.prototype = {
+	initialize: function() {
+		this.type = 'QuotesPlayer';
+		this.playedInterval = 2 * 1000;
+		this._playedQuotes = [];
+		this._playedQuotesIndex = -1;
+		this._timerPlayer = null;
+		this._timerPlaying = null;
+		this._onPick = function() { return null; };
+		this._onReady = function(currentQuote, event) {};
+		this._onPlay = function(currentQuote, event) {};
+		this._onResume = function(event) {};
+		this._onSuspend = function(event) {};
+		this._onPause = function(currentQuote, event) {};
+		this._onNext = function(nextQuote, previousQuote, event) {};
+		this._onPrevious = function(nextQuote, previousQuote, event) {};
+	},
 	setUp: function() {
 		var currentQuote = this.nextQuote(0);
 		if (this._onReady) {
 			logger.log('debug', 'QuotesPlayer.onReady', { 'quote': currentQuote });
 			this._onReady(currentQuote, event);
 		}
+	},
+	tearDown: function() {
+		this.pause();
+		this.initialize();
 	},
 	isSuspended: function() {
 		return !!this._timerPlayer;
@@ -56,7 +64,7 @@ QuotesPlayer.prototype = {
 	},
 	suspend: function(event) {
 		this._timerPlaying = false;
-		window.clearTimeout(this._timerPlayer);
+		window.clearInterval(this._timerPlayer);
 		if (this._onSuspend) {
 			logger.log('debug', 'QuotesPlayer.onSuspend');
 			this._onSuspend(event);
@@ -64,7 +72,7 @@ QuotesPlayer.prototype = {
 	},
 	pause: function(event) {
 		this._timerPlaying = false;
-		window.clearTimeout(this._timerPlayer);
+		window.clearInterval(this._timerPlayer);
 		this._timerPlayer = null;
 		var currentQuote = this.currentQuote();
 		if (this._onPause) {
@@ -83,7 +91,7 @@ QuotesPlayer.prototype = {
 	nextDelayed: function(event) {
 		var self = this;
 		self._timerPlaying = true;
-		window.clearTimeout(self._timerPlayer);
+		window.clearInterval(self._timerPlayer);
 		self._timerPlayer = window.setInterval(function() {
 			self.next(event);
 		}, self.playedInterval);

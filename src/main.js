@@ -1,85 +1,327 @@
 const electron = require('electron')
 const app = electron.app
-const BrowserWindow = electron.BrowserWindow
-const fs = require('fs');
+const fs = require('fs')
+const os = require('os')
 const low = require('lowdb')
 const fileAsync = require('lowdb/lib/file-async')
-const logger = require('winston'); 
+const logger = require('winston')
 const loggerRotate = require('winston-logrotate')
 const appdirectory = require('appdirectory')
 
+let appName = 'Quotes' // app.getname is wrong !?
+let dirs = new appdirectory(appName)
+let baseDir = dirs.userData() + '/'
+let dbPath = baseDir + appName + '.json'
+let logPath = baseDir + appName + '.log'
+let configPath = baseDir + appName + '.conf'
+let defaultConfig = { window: { width: 800, height: 600 } }
+let config = defaultConfig
+let mainWindow
+let mainMenu
+let timerConfig
+let db = null
+let onClosed = function() {}
+
+function loadGlobals() {
+  global.settings = {
+    name: appName,
+    log: logPath,
+    db: dbPath,
+    config: config,
+    platform: [ os.platform(), os.arch() ]
+  } 
+}
+
 function pad(n, width, z) {
-  z = z || '0';
+
   n = n + '';
-  return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+  width = width || 0;
+  z = z || '0';
+  return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n
+
 }
 
-function copyFromTo(from, to) {
-  fs.createReadStream(from).pipe(fs.createWriteStream(to));
+function copyFromToSync(from, to) {
+
+  fs.createReadStream(from).pipe(fs.createWriteStream(to))
+
 }
 
-function humanReadableTimestamp() {
-  var now = new Date()
-  return now.getFullYear() + '.' + pad(now.getMonth(), 2) + '.' + pad(now.getDay(), 2) + '.' + pad(now.getHours(), 2) + '.' + pad(now.getMinutes(), 2) + '.' + pad(now.getSeconds(), 2) + '.' + pad(now.getMilliseconds(), 3);
-}
+function cleanupBackupsSync(baseDir) {
 
-function setUp() {
-  var appName = 'Quotes' // app.getname is wrong !?
-  var dirs = new appdirectory(appName)
-  var baseDir = dirs.userData()+ '/'
-  var dbPath = baseDir + appName + '.json'
-  var logPath = baseDir + appName + '.log'
-  fs.stat(dbPath, function() {
-    copyFromTo(dbPath, humanReadableTimestamp())
-  })
   fs.readdir(baseDir, function(err, files) {
+    
     var bakFiles = files.filter(function(each, index) { return each.indexOf('.bak') >= 0; }).sort().reverse()
+    
     for (i = 9; i < bakFiles.length; i++) {
       fs.unlink(baseDir + files[i], function(err) {
         // ignore
       });
     }
+
+  }) 
+
+}
+
+function humanReadableTimestamp() {
+
+  var now = new Date()
+  return [ now.getFullYear(), pad(now.getMonth(), 2), pad(now.getDay(), 2), pad(now.getHours(), 2), pad(now.getMinutes(), 2), pad(now.getSeconds(), 2), pad(now.getMilliseconds(), 3) ].join('.')
+
+}
+
+function saveConfigDelayed() {
+
+  clearTimeout(timerConfig)
+
+  timerConfig = setTimeout(function() {
+    saveConfig()
+  }, 1000)
+
+}
+
+function loadConfig() {
+
+  fs.stat(configPath, function(err, stats) {
+    if (err) {
+      console.log(err);
+    } 
+    if (stats && stats.isFile && stats.isFile()) {
+      try {
+        config = JSON.parse(fs.readFileSync(configPath)) || defaultConfig
+      } catch (error) {
+        console.log(error)
+      }
+    }
   })
-  var db = low(dbPath, {
+
+}
+
+function saveConfig() {
+
+  try {
+    fs.writeFile(configPath, JSON.stringify(config), function(err) {
+      if (err) {
+        console.log(err);
+      }
+    });
+  } catch (error) {
+    console.log(error)
+  }
+
+}
+
+function createAndCleanupBackups() {
+
+  fs.stat(dbPath, function(err, stats) {
+    if (err) {
+      console.log(err);
+    } 
+    if (stats && stats.isFile && stats.isFile()) {
+      copyFromToSync(dbPath, baseDir + humanReadableTimestamp() + '.bak')
+      cleanupBackupsSync(baseDir)
+    } 
+  })
+
+}
+
+function loadDB() {
+  
+  db = low(dbPath, {
     storage: fileAsync
   })
-  global.settings = {
-    log: logPath,
-    db: dbPath
-  }
+
 }
 
-setUp()
+function toggleWindow() {
 
-// Module to create native browser window.
+  config.desktop = !config.desktop
 
-// Keep a global reference of the window object, if you don't, the window will
-// be closed automatically when the JavaScript object is garbage collected.
-let mainWindow
+  if (config.desktop) {
+    config.window.frame = false
+    config.window.transparent = true
+    config.window.type = 'desktop'
+  } else {
+    delete config.window.frame
+    delete config.window.transparent
+    delete config.window.type
+  }
+  
+  saveConfigDelayed()
+  
+  reopenWindow()
+
+}
+
+function reopenWindow() {
+
+  if (mainWindow) {
+    onClosed = function() {
+      onClosed = function() {}
+      createWindow() 
+    }
+    mainWindow.close()
+  } else {
+    onClosed = function() {}
+    createWindow()
+  }
+
+}
+
+function toggleDevTools() {
+
+  if (config.desktop) {
+    config.debug = true
+    toggleWindow()
+  } else {
+    config.debug = !config.debug;
+    if (config.debug) {
+      mainWindow.webContents.openDevTools()
+    } else {
+      mainWindow.webContents.closeDevTools()
+    }
+  }
+
+}
 
 function createWindow () {
-  // Create the browser window.
-  mainWindow = new BrowserWindow({width: 800, height: 600})
+  
+  loadGlobals()
 
-  // and load the index.html of the app.
+  mainWindow = new electron.BrowserWindow(config.window)
+
   mainWindow.loadURL(`file://${__dirname}/index.html`)
 
-  // Open the DevTools.
-  mainWindow.webContents.openDevTools()
+  if (config.debug && !config.desktop) {
+    mainWindow.webContents.openDevTools()
+  }
 
-  // Emitted when the window is closed.
   mainWindow.on('closed', function () {
-    // Dereference the window object, usually you would store windows
-    // in an array if your app supports multi windows, this is the time
-    // when you should delete the corresponding element.
     mainWindow = null
+    onClosed()
   })
+
+  mainWindow.on('resize', function(event) {
+    config.desktop = false
+    config.window = mainWindow.getBounds()
+    saveConfigDelayed()
+  })
+
+  mainWindow.on('moved', function(event) {
+    config.desktop = false
+    config.window = mainWindow.getBounds()
+    saveConfigDelayed()
+  })
+
+  mainWindow.on('devtools-opened', function(event) {
+    config.debug = true
+    saveConfigDelayed()
+  })
+
+  mainWindow.on('devtools-closed', function(event) {
+    config.debug = false
+    saveConfigDelayed()
+  })
+
+  createMenu()
+
 }
+
+function createMenu() {
+
+  var template = [
+    {
+      label: 'Main',
+      submenu: [
+        { label: 'Quit', 
+          accelerator: 'Command+Q',
+          click() { 
+            app.quit(); 
+          } 
+        }
+      ]
+    },
+    config.desktop ? {} :
+    {
+      label: 'Edit',
+      submenu: [
+        {
+          label: 'Undo',
+          accelerator: 'CmdOrCtrl+Z',
+          role: 'undo'
+        },
+        {
+          label: 'Redo',
+          accelerator: 'Shift+CmdOrCtrl+Z',
+          role: 'redo'
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: 'Cut',
+          accelerator: 'CmdOrCtrl+X',
+          role: 'cut'
+        },
+        {
+          label: 'Copy',
+          accelerator: 'CmdOrCtrl+C',
+          role: 'copy'
+        },
+        {
+          label: 'Paste',
+          accelerator: 'CmdOrCtrl+V',
+          role: 'paste'
+        },
+        {
+          label: 'Paste and Match Style',
+          accelerator: 'Shift+Command+V',
+          role: 'pasteandmatchstyle'
+        },
+        {
+          label: 'Delete',
+          role: 'delete'
+        },
+        {
+          label: 'Select All',
+          accelerator: 'CmdOrCtrl+A',
+          role: 'selectall'
+        },
+      ]
+    },
+    {
+      label: 'View',
+      submenu: [
+        { label: 'Toggle Desktop/Window', 
+          click() { 
+            toggleWindow()
+          } 
+        },
+        { label: 'Toggle Development tools', 
+          click() { 
+            toggleDevTools()
+          } 
+        }
+      ]
+    }
+  ]
+  
+  mainMenu = electron.Menu.buildFromTemplate(template);
+
+  electron.Menu.setApplicationMenu(mainMenu);
+
+}
+
+createAndCleanupBackups()
+loadConfig()
+loadDB()
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', createWindow)
+app.on('ready', function() {
+  createWindow()
+})
 
 // Quit when all windows are closed.
 app.on('window-all-closed', function () {
