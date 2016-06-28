@@ -1,23 +1,26 @@
 {
   "name": "quotes",
   "version": "0.1.0",
-  "description": "",
+  "description": "A simple widget playing quotes on the desktop",
   "license": "MIT",
   "author": {
     "name": "Stefan Reichhart",
     "email": "stefan.reichhart@gmail.com",
-    "url": ""
+    "url": "https://github.com/slashblue/quotes"
+  },
+  "repository" : { 
+     "type" : "git",
+     "url": "https://github.com/slashblue/quotes"
   },
   "main": "main.js",
   "scripts": {
     "test": "xo",
     "start": "electron main.js",
-    "build": "electron-packager . --out=dist --app-version=$npm_package_version --prune --asar --overwrite --all"
+    "build": "electron-packager . --overwrite --all"
   },
   "files": [
     "js/*.js",
-    "css/*.css",
-    "data/*.json"
+    "css/*.css"
   ],
   "devDependencies": {
     "electron": "^0.4.1",
@@ -27,8 +30,6 @@
   },
   "dependencies": {
     "appdirectory": "^0.1.0",
-    "electron-json-storage": "^2.0.0",
-    "gzipme": "0.0.9",
     "jquery": "^3.0.0",
     "jquery-ui": "^1.10.5",
     "jquery.scrollto": "^2.1.2",
@@ -36,5 +37,6 @@
     "lowdb": "^0.13.1",
     "winston": "^2.2.0",
     "winston-logrotate": "^1.0.0"
-  }
+  },
+  "os" : [ "darwin" ]
 }
