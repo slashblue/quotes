@@ -409,7 +409,7 @@ QuotesUI = {
 		var self = this;
 		QuotesEditors.detach(null);
 		jqNode.empty();
-		// BUG: very strange rendering bug in transparent windows !
+		// BUG: very strange bug when rendering transparent windows, this compensates for most disturbances !
 		window.setTimeout(function() {
 			self.appendQuote(quote, jqNode);
 		}, 50);
