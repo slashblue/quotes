@@ -78,9 +78,9 @@ function cleanupBackupsSync(baseDir) {
 
   fs.readdir(baseDir, function(err, files) {
     
-    var bakFiles = files.filter(function(each, index) { return each.indexOf('.bak') >= 0; }).sort().reverse()
+    var bakFiles = files.filter(function(each, index) { return each.indexOf('.bak') >= 0; }).sort()
     
-    for (i = 9; i < bakFiles.length; i++) {
+    for (i = 0; i < Math.max(0, bakFiles.length - 9); i++) {
       logger.log('info', 'cleanupBackupsSync', { path: baseDir + files[i] })
       fs.unlink(baseDir + files[i], function(err) {
         if (err) {
