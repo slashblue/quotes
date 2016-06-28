@@ -45,7 +45,7 @@ QuotesFetcher.prototype = {
 		self._specs.push(function() {
 			self.fetch(urls, interval, function(request, response) {
 				callback(request, response, function(text, author, keywords, source, language, safe) {
-					self.handle(text, author, keywords, source, language, safe, request, response);
+					self.handleQuote(text, author, keywords, source, language, safe, request, response);
 				});
 			});
 		});
@@ -139,7 +139,7 @@ QuotesFetcher.prototype = {
 	onFetchAborted: function(callback) {
 		this._onFetchAborted = callback;
 	},
-	handle: function(text, author, keywords, source, language, safe, request, response) {
+	handleQuote: function(text, author, keywords, source, language, safe, request, response) {
 		if (text) {
 			var safe = safe && $.isSafeText(text) && $.isSafeText(author) && $.allSatisfy(keywords, function(index, each) { return $.isSafeText(each); }) && $.isSafeText(source) && $.isSafeText(language);
 			var quote = new Quote(text, author, keywords, source, language, ((request && request.timestamp ? request.timestamp : null) || $.timestamp()), safe, request.url);;

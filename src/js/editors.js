@@ -7,6 +7,9 @@ QuotesEditors = {
 			}
 		});
 	},
+	tearDown: function() {
+		$(document).off('keydown.globaleditor');
+	},
 	abort: function(event) {
 		this.each(function(each) {
 			each.abort(event);

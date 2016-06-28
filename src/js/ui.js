@@ -6,13 +6,13 @@ QuotesUI = {
 	setUp: function(event) {
 		try {
 			logger.log('info', 'QuotesUI.setUp');
-			this.setUpMode();
+			this.setUpDocument();
 			this.setUpDatabase();
 		} catch (error) {
 			logger.log('error', 'QuotesUI.setUp', { 'error': error });
 		}
 	},
-	setUpMode: function() {
+	setUpDocument: function() {
 		var html = $('html');
 		if (Settings && Settings.isDesktop()) {
 			html.addClass('desktop');
@@ -73,7 +73,7 @@ QuotesUI = {
 			self.setUpPlayer();
 			self.setUpSearcher();
 			self.setUpControl();
-			self.setupRenderer();
+			self.setupMainWindow();
 		});
 		self.database.setUp();
 	},
@@ -316,7 +316,7 @@ QuotesUI = {
 			$('#searchText').focus();
 		});
 	},
-	setupRenderer: function() {
+	setupMainWindow: function() {
 		var self = this;
 		if (window && window.electron && window.electron.ipcRenderer) {
 			var ipc = window.electron.ipcRenderer;

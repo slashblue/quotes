@@ -39,7 +39,21 @@ QuotesDatabase.prototype = {
 					logger.log('debug', 'QuotesDatabase.onBeforeLoad', { 'path': this._path });
 					this._onBeforeLoad();
 				}		
-				this._load();
+				try {
+					logger.log('info', 'QuotesDatabase._onLoad', { 'path': this._path });
+					this._quotes = Quotes.read(this._db.get('quotes').value());
+					this._requests = QuotesRequests.read(this._db.get('requests').value());
+					if (this._quotes.length == 0) {
+						this.new();
+					} else {
+						this.migrate();
+					}
+				} catch (error) {
+					logger.log('error', 'QuotesDatabase.onLoadError', { 'error': error, 'path': this._path });
+					if (this._onLoadError) {
+						this._onLoadError(error);
+					}
+				}
 				if (this._onAfterLoad) {
 					logger.log('debug', 'QuotesDatabase.onAfterLoad', { 'path': this._path });
 					this._onAfterLoad();
@@ -55,23 +69,6 @@ QuotesDatabase.prototype = {
 		if (this._onReady) {
 			logger.log('debug', 'QuotesDatabase.onReady');
 			this._onReady();
-		}
-	},
-	_load: function() {
-		try {
-			logger.log('info', 'QuotesDatabase._onLoad', { 'path': this._path });
-			this._quotes = Quotes.read(this._db.get('quotes').value());
-			this._requests = QuotesRequests.read(this._db.get('requests').value());
-			if (this._quotes.length == 0) {
-				this.new();
-			} else {
-				this.migrate();
-			}
-		} catch (error) {
-			logger.log('error', 'QuotesDatabase.onLoadError', { 'error': error, 'path': this._path });
-			if (this._onLoadError) {
-				this._onLoadError(error);
-			}
 		}
 	},
 	new: function() {
