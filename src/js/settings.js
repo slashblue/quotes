@@ -1,11 +1,11 @@
 Settings = {
 	getDBFilePath: function() {
-		return this.getGlobal().db;
+		return this.getSettings().db;
 	},
 	getLogFilePath: function() {
-		return this.getGlobal().log;
+		return this.getSettings().log;
 	},
-	getGlobal: function() {
+	getSettings: function() {
 		if (window.electron && window.electron.remote && window.electron.remote.getGlobal) {
 			return window.electron.remote.getGlobal('settings');
 		} else {
@@ -13,8 +13,16 @@ Settings = {
 			return {};
 		}
 	},
+	getOptions: function(key, fallbackValue) {
+		var settings = this.getSettings().options;
+		if (settings && settings.hasOwnProperty(key)) {
+			return settings[key] || fallbackValue;
+		} else {
+			return fallbackValue;
+		}
+	},
 	isDesktop: function() {
-		return !!this.getGlobal().config.desktop;
+		return this.getOptions('desktop', false);
 	},
 	isWindow: function() {
 		return !this.isDesktop();

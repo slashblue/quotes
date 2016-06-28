@@ -13,22 +13,19 @@ QuotesUI = {
 		}
 	},
 	setUpMode: function() {
-		if (Settings) {
-			var html = $('html');
-			if (Settings.isDesktop()) {
-				html.addClass('desktop');
-			} else {
-				html.removeClass('desktop');
-			}
-			$(Settings.getGlobal().platform || []).each(function(index, each) {
-				html.addClass(each);
-			});
+		var html = $('html');
+		if (Settings && Settings.isDesktop()) {
+			html.addClass('desktop');
+		} else {
+			html.removeClass('desktop');
 		}
-
+		$(Settings && Settings.getSettings().platform || []).each(function(index, each) {
+			html.addClass(each);
+		});
 	},
 	setUpPlayer: function() {
 		var self = this;
-		self.player = new QuotesPlayer();
+		self.player = new QuotesPlayer(Settings.getOptions('player', {}));
 		self.player.onPlay(function(event) {
 			$('#tab-play').addClass('tab-playing');
 		});
@@ -337,9 +334,15 @@ QuotesUI = {
 			});
 			ipc.on('player-faster', function(event, arg) {
 				self.player.faster();
+				event.sender.send('player-options', self.player.getOptions());
 			});
 			ipc.on('player-slower', function(event, arg) {
 				self.player.slower();
+				event.sender.send('player-options', self.player.getOptions());
+			});
+			ipc.on('player-reset', function(event, arg) {
+				self.player.reset();
+				event.sender.send('player-options', self.player.getOptions());
 			});
 		}
 	},

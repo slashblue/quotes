@@ -15,12 +15,12 @@ let dirs = new appdirectory(appName)
 let baseDir = dirs.userData() + '/'
 let dbPath = baseDir + appName + '.json'
 let logPath = baseDir + appName + '.log'
-let configPath = baseDir + appName + '.conf'
-let defaultConfig = { window: { width: 800, height: 600 } }
-let config = defaultConfig
+let optionsPath = baseDir + appName + '.conf'
+let defaultOptions = { window: { width: 800, height: 600 }, player: {} }
+let options = { window: { width: 800, height: 600 }, player: {} }
 let mainWindow
 let mainMenu
-let timerConfig
+let timerOptions
 let logger
 let onClosed = function() {}
 
@@ -53,7 +53,7 @@ function loadGlobals() {
     name: appName,
     log: logPath,
     db: dbPath,
-    config: config,
+    options: options,
     platform: [ os.platform(), os.arch() ]
   } 
 
@@ -100,43 +100,43 @@ function humanReadableTimestamp() {
 
 }
 
-function saveConfigDelayed() {
+function saveOptionsDelayed() {
 
-  clearTimeout(timerConfig)
+  clearTimeout(timerOptions)
 
-  timerConfig = setTimeout(function() {
-    saveConfig()
+  timerOptions = setTimeout(function() {
+    saveOptions()
   }, 1000)
 
 }
 
-function loadConfig() {
+function loadOptions() {
 
-  fs.stat(configPath, function(err, stats) {
+  fs.stat(optionsPath, function(err, stats) {
     if (err) {
-      logger.log('error', 'loadConfig.stat', { error: err, path: stats })
+      logger.log('error', 'loadOptions.stat', { error: err, path: stats })
     } 
     if (stats && stats.isFile && stats.isFile()) {
       try {
-        config = JSON.parse(fs.readFileSync(configPath)) || defaultConfig
+        options = JSON.parse(fs.readFileSync(optionsPath)) || defaultOptions
       } catch (error) {
-        logger.log('error', 'loadConfig.json', { error: error, path: stats })
+        logger.log('error', 'loadOptions.json', { error: error, path: stats })
       }
     }
   })
 
 }
 
-function saveConfig() {
+function saveOptions() {
 
   try {
-    fs.writeFile(configPath, JSON.stringify(config), function(err) {
+    fs.writeFile(optionsPath, JSON.stringify(options), function(err) {
       if (err) {
-        logger.log('error', 'saveConfig.write', { error: err, path: configPath })
+        logger.log('error', 'saveOptions.write', { error: err, path: optionsPath })
       }
     });
   } catch (error) {
-    logger.log('error', 'saveConfig.json', { error: err, path: stats })
+    logger.log('error', 'saveOptions.json', { error: err, path: stats })
   }
 
 }
@@ -157,19 +157,19 @@ function createAndCleanupBackups() {
 
 function toggleWindow() {
 
-  config.desktop = !config.desktop
+  options.desktop = !options.desktop
 
-  if (config.desktop) {
-    config.window.frame = false
-    config.window.transparent = true
-    config.window.type = 'desktop'
+  if (options.desktop) {
+    options.window.frame = false
+    options.window.transparent = true
+    options.window.type = 'desktop'
   } else {
-    delete config.window.frame
-    delete config.window.transparent
-    delete config.window.type
+    delete options.window.frame
+    delete options.window.transparent
+    delete options.window.type
   }
   
-  saveConfigDelayed()
+  saveOptionsDelayed()
   
   reopenWindow()
 
@@ -192,12 +192,12 @@ function reopenWindow() {
 
 function toggleDevTools() {
 
-  if (config.desktop) {
-    config.debug = true
+  if (options.desktop) {
+    options.debug = true
     toggleWindow()
   } else {
-    config.debug = !config.debug;
-    if (config.debug) {
+    options.debug = !options.debug;
+    if (options.debug) {
       mainWindow.webContents.openDevTools()
     } else {
       mainWindow.webContents.closeDevTools()
@@ -210,11 +210,11 @@ function createWindow () {
   
   loadGlobals()
 
-  mainWindow = new electron.BrowserWindow(config.window)
+  mainWindow = new electron.BrowserWindow(options.window)
 
   mainWindow.loadURL(`file://${__dirname}/index.html`)
 
-  if (config.debug && !config.desktop) {
+  if (options.debug && !options.desktop) {
     mainWindow.webContents.openDevTools()
   }
 
@@ -224,25 +224,25 @@ function createWindow () {
   })
 
   mainWindow.on('resize', function(event) {
-    config.desktop = false
-    config.window = mainWindow.getBounds()
-    saveConfigDelayed()
+    options.desktop = false
+    options.window = mainWindow.getBounds()
+    saveOptionsDelayed()
   })
 
   mainWindow.on('moved', function(event) {
-    config.desktop = false
-    config.window = mainWindow.getBounds()
-    saveConfigDelayed()
+    options.desktop = false
+    options.window = mainWindow.getBounds()
+    saveOptionsDelayed()
   })
 
   mainWindow.webContents.on('devtools-opened', function(event) {
-    config.debug = true
-    saveConfigDelayed()
+    options.debug = true
+    saveOptionsDelayed()
   })
 
   mainWindow.webContents.on('devtools-closed', function(event) {
-    config.debug = false
-    saveConfigDelayed()
+    options.debug = false
+    saveOptionsDelayed()
   })
 
   createMenu()
@@ -303,6 +303,13 @@ function createMenu() {
             }
           } 
         },
+        { label: 'Reset Defaults', 
+          click(item, focusedWindow) { 
+            if (focusedWindow) {
+              mainWindow.webContents.send('player-reset');
+            }
+          } 
+        },
         {
           type: 'separator'
         },
@@ -314,7 +321,7 @@ function createMenu() {
         }
       ]
     },
-    config.desktop ? {} :
+    options.desktop ? {} :
     {
       label: 'Edit',
       submenu: [
@@ -403,7 +410,7 @@ function createMenu() {
 createLogger()
 logger.log('info', 'startup')
 createAndCleanupBackups()
-loadConfig()
+loadOptions()
 
 app.on('ready', function() {
   createWindow()
@@ -424,4 +431,11 @@ app.on('activate', function () {
 
 electron.ipcMain.on('copy-quote', function(event, arg) {
   electron.clipboard.writeText(arg);
+})
+
+electron.ipcMain.on('player-options', function(event, arg) {
+  if (arg) {
+    options.player = arg
+    saveOptionsDelayed()
+  }
 })

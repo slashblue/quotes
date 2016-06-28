@@ -1,12 +1,12 @@
-QuotesPlayer = function() {
-	this.initialize();
+QuotesPlayer = function(options) {
+	this.initialize(options);
 	return this;
 };
 
 QuotesPlayer.prototype = {
-	initialize: function() {
+	initialize: function(options) {
 		this.type = 'QuotesPlayer';
-		this.playedInterval = 10 * 1000;
+		this.setDefaultOptions();
 		this.playedFactorFaster = 0.8;
 		this.playedFactorSlower = 1.2;
 		this._playedQuotes = [];
@@ -23,6 +23,10 @@ QuotesPlayer.prototype = {
 		this._onPause = function(currentQuote, event) {};
 		this._onNext = function(nextQuote, previousQuote, event) {};
 		this._onPrevious = function(nextQuote, previousQuote, event) {};
+		this._onFaster = function(nextSpeed, previousSpeed) {};
+		this._onReset = function() {};
+		this._onSlower = function(nextSpeed, previousSpeed) {};
+		this.setOptions(options);
 	},
 	setUp: function() {
 		var currentQuote = this.nextQuote(0);
@@ -69,6 +73,7 @@ QuotesPlayer.prototype = {
 	suspend: function(event) {
 		this._timerPlaying = false;
 		window.clearInterval(this._timerPlayer);
+		window.clearTimeout(self._timerRestart);
 		if (this._onSuspend) {
 			logger.log('debug', 'QuotesPlayer.onSuspend');
 			this._onSuspend(event);
@@ -77,6 +82,7 @@ QuotesPlayer.prototype = {
 	pause: function(event) {
 		this._timerPlaying = false;
 		window.clearInterval(this._timerPlayer);
+		window.clearTimeout(self._timerRestart);
 		this._timerPlayer = null;
 		var currentQuote = this.currentQuote();
 		if (this._onPause) {
@@ -115,7 +121,7 @@ QuotesPlayer.prototype = {
 		this.restart();
 		if (this._onFaster) {
 			logger.log('debug', 'QuotesPlayer.onFaster', { 'previous': previousPlayedInterval, 'next': this.playedInterval });
-			this._onFaster();
+			this._onFaster(this.playedInterval, previousPlayedInterval);
 		}
 	},
 	slower: function() {
@@ -124,7 +130,14 @@ QuotesPlayer.prototype = {
 		this.restart();
 		if (this._onSlower) {
 			logger.log('debug', 'QuotesPlayer.onSlower', { 'previous': previousPlayedInterval, 'next': this.playedInterval });
-			this._onSlower();
+			this._onSlower(this.playedInterval, previousPlayedInterval);
+		}
+	},
+	reset: function() {
+		this.setDefaultOptions();
+		if (this._onReset) {
+			logger.log('debug', 'QuotesPlayer.onReset');
+			this._onReset();
 		}
 	},
 	restart: function(diff) {
@@ -164,6 +177,15 @@ QuotesPlayer.prototype = {
 	onPick: function(callback) {
 		this._onPick = callback;
 	},
+	onFaster: function(callback) {
+		this._onFaster = callback;
+	},
+	onSlower: function(callback) {
+		this._onSlower = callback;
+	},
+	previousQuote: function() {
+		return this.nextQuote(-1);
+	},
 	currentQuote: function() {
 		return this._playedQuotes[this._playedQuotesIndex] || {};
 	},
@@ -183,5 +205,18 @@ QuotesPlayer.prototype = {
 		}
 		this._playedQuotesIndex = index;
 		return quote;
+	},
+	setDefaultOptions: function() {
+		this.playedInterval = 10 * 1000;
+	},
+	setOptions: function(options) {
+		if (options) {
+			this.playedInterval = options.playedInterval || this.playedInterval;
+		}
+	},
+	getOptions: function() {
+		return {
+			'playedInterval': this.playedInterval
+		};
 	}
 };
