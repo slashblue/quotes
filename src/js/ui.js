@@ -64,7 +64,7 @@ QuotesUI = {
 			self.updateStats();
 		});
 		self.database.onWriteRequests(function(requests) {
-			return self.fetcher.eachRequest(function(index, each) {
+			self.fetcher.eachRequest(function(index, each) {
 				requests.push(each.forJSON());
 			});
 		});
@@ -79,7 +79,7 @@ QuotesUI = {
 	},
 	setUpFetcher: function() {
 		var self = this;
-		self.fetcher = new QuotesFetcher();
+		self.fetcher = new QuotesFetcher(self.database.getRequests());
 		self.fetcher.onHandleQuote(function(quote, request, response) {
 			self.database.addQuote(quote, request, response);
 		});

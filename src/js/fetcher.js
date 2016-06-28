@@ -1,14 +1,14 @@
-QuotesFetcher = function() {
-	this.initialize();
+QuotesFetcher = function(requests) {
+	this.initialize(requests);
 };
 
 QuotesFetcher.prototype = {
-	initialize: function() {
+	initialize: function(requests) {
 		this.type = 'QuotesFetcher';
 		this.delayStart = 250;
 		this.delayInterval = 5 * 60 * 1000; // every 5 minutes
 		this._specs = [];
-		this._requests = [];
+		this._requests = (requests || []).slice();
 		this._timerStart = null;
 		this._timerInterval = null;
 		this._onHandleQuote = function(quote, request, response) {};
@@ -78,6 +78,7 @@ QuotesFetcher.prototype = {
 				logger.log('debug', 'QuotesFetcher.onBeforeFetch', { 'url': url, 'interval': interval });
 				this._onBeforeFetch(request);
 			}
+			request.getHtml();
 		} else {
 			if (this._onFetchAborted) {
 				logger.log('debug', 'QuotesFetcher.onFetchAborted', { 'url': url, 'interval': interval });

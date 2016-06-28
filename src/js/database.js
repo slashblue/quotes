@@ -147,29 +147,30 @@ QuotesDatabase.prototype = {
 		}, self.delaySave);
 	},
 	save: function(request, response) {
-		logger.log('info', 'QuotesDatabase.onSave', { 'path': this._path });
-		var lastChange = this._lastChange;
+		var self = this;
+		logger.log('info', 'QuotesDatabase.onSave', { 'path': self._path });
+		var lastChange = self._lastChange;
 		if (lastChange) {
-			if (this._db && this._db.set) {
-				if (this._onBeforeSave) {
+			if (self._db && self._db.set) {
+				if (self._onBeforeSave) {
 					logger.log('debug', 'QuotesDatabase.onBeforeSave');
-					this._onBeforeSave();
+					self._onBeforeSave();
 				}
-				this._db.set('quotes', Quotes.write(this._quotes)).value();
+				self._db.set('quotes', Quotes.write(self._quotes)).value();
 				// TODO -> fetcherS
-				this._db.set('requests', function(requests) {
-					if (this._onWriteRequests) {
-						this._onWriteRequests(requests);
+				self._db.set('requests', function(requests) {
+					if (self._onWriteRequests) {
+						self._onWriteRequests(requests);
 					}
 					return requests;
 				}([])).value();
-				this._db.write();
-				if (this._onAfterSave) {
+				self._db.write();
+				if (self._onAfterSave) {
 					logger.log('debug', 'QuotesDatabase.onAfterSave');
-					this._onAfterSave();
+					self._onAfterSave();
 				}
 				if (lastChange == this._lastChange) {
-					this._lastChange = null;
+					self._lastChange = null;
 				}
 			}
 		}
@@ -209,6 +210,9 @@ QuotesDatabase.prototype = {
 	},
 	getQuotes: function() {
 		return this._quotes;
+	},
+	getRequests: function() {
+		return this._requests;
 	},
 	getRandomQuote: function() {
 		return this.getQuotes()[Math.floor(this.size() * Math.random())];
