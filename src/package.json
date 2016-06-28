@@ -28,6 +28,7 @@
   "dependencies": {
     "appdirectory": "^0.1.0",
     "electron-json-storage": "^2.0.0",
+    "gzipme": "0.0.9",
     "jquery": "^3.0.0",
     "jquery-ui": "^1.10.5",
     "jquery.scrollto": "^2.1.2",

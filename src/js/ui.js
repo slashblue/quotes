@@ -76,6 +76,7 @@ QuotesUI = {
 			self.setUpPlayer();
 			self.setUpSearcher();
 			self.setUpControl();
+			self.setupRenderer();
 		});
 		self.database.setUp();
 	},
@@ -318,6 +319,30 @@ QuotesUI = {
 			$('#searchText').focus();
 		});
 	},
+	setupRenderer: function() {
+		var self = this;
+		if (window && window.electron && window.electron.ipcRenderer) {
+			var ipc = window.electron.ipcRenderer;
+			ipc.on('copy-quote', function(event, arg) {
+				event.sender.send('copy-quote', self.player.currentQuote().forString());
+			});
+			ipc.on('player-toggle', function(event, arg) {
+				self.player.toggle();
+			});
+			ipc.on('player-next', function(event, arg) {
+				self.player.next();
+			});
+			ipc.on('player-previous', function(event, arg) {
+				self.player.previous();
+			});
+			ipc.on('player-faster', function(event, arg) {
+				self.player.faster();
+			});
+			ipc.on('player-slower', function(event, arg) {
+				self.player.slower();
+			});
+		}
+	},
 	tearDown: function(event) {
 		try {
 			logger.log('info', 'QuotesUI.tearDown');
@@ -381,10 +406,10 @@ QuotesUI = {
 		var self = this;
 		QuotesEditors.detach(null);
 		jqNode.empty();
-		// very strange rendering bug in transparent windows !
+		// BUG: very strange rendering bug in transparent windows !
 		window.setTimeout(function() {
 			self.appendQuote(quote, jqNode);
-		}, 25);
+		}, 50);
 	},
 	editable: function(jqNode, editor, quote, callback) {
 		var self = this;

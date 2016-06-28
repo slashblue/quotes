@@ -6,11 +6,15 @@ QuotesPlayer = function() {
 QuotesPlayer.prototype = {
 	initialize: function() {
 		this.type = 'QuotesPlayer';
-		this.playedInterval = 2 * 1000;
+		this.playedInterval = 10 * 1000;
+		this.playedFactorFaster = 0.8;
+		this.playedFactorSlower = 1.2;
 		this._playedQuotes = [];
 		this._playedQuotesIndex = -1;
 		this._timerPlayer = null;
 		this._timerPlaying = null;
+		this._timerTimestamp = null;
+		this._timerRestart = null;
 		this._onPick = function() { return null; };
 		this._onReady = function(currentQuote, event) {};
 		this._onPlay = function(currentQuote, event) {};
@@ -93,6 +97,7 @@ QuotesPlayer.prototype = {
 		self._timerPlaying = true;
 		window.clearInterval(self._timerPlayer);
 		self._timerPlayer = window.setInterval(function() {
+			self._timerTimestamp = $.timestamp();
 			self.next(event);
 		}, self.playedInterval);
 	},
@@ -102,6 +107,37 @@ QuotesPlayer.prototype = {
 		if (this._onPrevious) {
 			logger.log('debug', 'QuotesPlayer.onPrevious', { 'previousQuote': previousQuote, 'nextQuote': nextQuote });
 			this._onPrevious(nextQuote, previousQuote, event);
+		}
+	},
+	faster: function() {
+		var previousPlayedInterval = this.playedInterval
+		this.playedInterval = this.playedFactorFaster * this.playedInterval;
+		this.restart();
+		if (this._onFaster) {
+			logger.log('debug', 'QuotesPlayer.onFaster', { 'previous': previousPlayedInterval, 'next': this.playedInterval });
+			this._onFaster();
+		}
+	},
+	slower: function() {
+		var previousPlayedInterval = this.playedInterval
+		this.playedInterval = this.playedFactorSlower * this.playedInterval;
+		this.restart();
+		if (this._onSlower) {
+			logger.log('debug', 'QuotesPlayer.onSlower', { 'previous': previousPlayedInterval, 'next': this.playedInterval });
+			this._onSlower();
+		}
+	},
+	restart: function(diff) {
+		var self = this;
+		if (self.isPlaying()) {	
+			window.clearInterval(self._timerPlayer);
+			window.clearTimeout(self._timerRestart);
+			var diff = Math.min(self.playedInterval , Math.max(0, self._timerTimestamp ? self._timerTimestamp + self.playedInterval - $.timestamp() : self.playedInterval));	
+			logger.log('debug', 'QuotesPlayer.onRestart', { 'diff': diff });
+			self._timerRestart = window.setTimeout(function() {
+				self.next();
+				self.nextDelayed();
+			}, diff);
 		}
 	},
 	onPlay: function(callback) {

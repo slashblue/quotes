@@ -4,8 +4,10 @@ const fs = require('fs')
 const os = require('os')
 const low = require('lowdb')
 const fileAsync = require('lowdb/lib/file-async')
-const logger = require('winston')
-const loggerRotate = require('winston-logrotate')
+const zlib = require('zlib')
+const gzipme = require('gzipme')
+const winston = require('winston')
+const logrotate = require('winston-logrotate')
 const appdirectory = require('appdirectory')
 
 let appName = 'Quotes' // app.getname is wrong !?
@@ -19,10 +21,34 @@ let config = defaultConfig
 let mainWindow
 let mainMenu
 let timerConfig
-let db = null
+let logger
 let onClosed = function() {}
 
+function createLogger() {
+  logger = new (winston.Logger)({
+    transports: [
+      new (winston.transports.Console)({ 
+        level: 'warn'
+      }),
+      (logrotate && logrotate.Rotate) ? 
+        (new logrotate.Rotate({
+          file: logPath, 
+          timestamp: true,
+          max: '100m',
+          keep: 7,
+          compress: true,
+          level: 'info' 
+        })) : 
+        (new (winston.transports.File)({
+          filename: logPath, 
+          level: 'info'
+        }))
+    ]
+  });
+}
+
 function loadGlobals() {
+
   global.settings = {
     name: appName,
     log: logPath,
@@ -30,6 +56,7 @@ function loadGlobals() {
     config: config,
     platform: [ os.platform(), os.arch() ]
   } 
+
 }
 
 function pad(n, width, z) {
@@ -41,9 +68,9 @@ function pad(n, width, z) {
 
 }
 
-function copyFromToSync(from, to) {
+function copyAndZipFromToSync(from, to) {
 
-  fs.createReadStream(from).pipe(fs.createWriteStream(to))
+  fs.createReadStream(from).pipe(zlib.createGzip()).pipe(fs.createWriteStream(to))
 
 }
 
@@ -54,8 +81,11 @@ function cleanupBackupsSync(baseDir) {
     var bakFiles = files.filter(function(each, index) { return each.indexOf('.bak') >= 0; }).sort().reverse()
     
     for (i = 9; i < bakFiles.length; i++) {
+      logger.log('info', 'cleanupBackupsSync', { path: baseDir + files[i] })
       fs.unlink(baseDir + files[i], function(err) {
-        // ignore
+        if (err) {
+          logger.log('error', 'cleanupBackupsSync', { path: baseDir + files[i], error: err })
+        }
       });
     }
 
@@ -84,13 +114,13 @@ function loadConfig() {
 
   fs.stat(configPath, function(err, stats) {
     if (err) {
-      console.log(err);
+      logger.log('error', 'loadConfig.stat', { error: err, path: stats })
     } 
     if (stats && stats.isFile && stats.isFile()) {
       try {
         config = JSON.parse(fs.readFileSync(configPath)) || defaultConfig
       } catch (error) {
-        console.log(error)
+        logger.log('error', 'loadConfig.json', { error: error, path: stats })
       }
     }
   })
@@ -102,11 +132,11 @@ function saveConfig() {
   try {
     fs.writeFile(configPath, JSON.stringify(config), function(err) {
       if (err) {
-        console.log(err);
+        logger.log('error', 'saveConfig.write', { error: err, path: configPath })
       }
     });
   } catch (error) {
-    console.log(error)
+    logger.log('error', 'saveConfig.json', { error: err, path: stats })
   }
 
 }
@@ -115,20 +145,12 @@ function createAndCleanupBackups() {
 
   fs.stat(dbPath, function(err, stats) {
     if (err) {
-      console.log(err);
+      logger.log('error', 'createAndCleanupBackups', { error: err, stats: stats, path: dbPath })
     } 
     if (stats && stats.isFile && stats.isFile()) {
-      copyFromToSync(dbPath, baseDir + humanReadableTimestamp() + '.bak')
+      copyAndZipFromToSync(dbPath, baseDir + humanReadableTimestamp() + '.bak.gz')
       cleanupBackupsSync(baseDir)
     } 
-  })
-
-}
-
-function loadDB() {
-  
-  db = low(dbPath, {
-    storage: fileAsync
   })
 
 }
@@ -213,12 +235,12 @@ function createWindow () {
     saveConfigDelayed()
   })
 
-  mainWindow.on('devtools-opened', function(event) {
+  mainWindow.webContents.on('devtools-opened', function(event) {
     config.debug = true
     saveConfigDelayed()
   })
 
-  mainWindow.on('devtools-closed', function(event) {
+  mainWindow.webContents.on('devtools-closed', function(event) {
     config.debug = false
     saveConfigDelayed()
   })
@@ -233,6 +255,57 @@ function createMenu() {
     {
       label: 'Main',
       submenu: [
+        { label: 'Copy Quote', 
+          click(item, focusedWindow) { 
+            if (focusedWindow) {
+              mainWindow.webContents.send('copy-quote');
+            }
+          } 
+        },
+        {
+          type: 'separator'
+        },
+        { label: 'Toggle Play/Pause', 
+          click(item, focusedWindow) { 
+            if (focusedWindow) {
+              mainWindow.webContents.send('player-toggle');
+            }
+          } 
+        },
+        { label: 'Next', 
+          click(item, focusedWindow) { 
+            if (focusedWindow) {
+              mainWindow.webContents.send('player-next');
+            }
+          } 
+        },
+        { label: 'Previous', 
+          click(item, focusedWindow) { 
+            if (focusedWindow) {
+              mainWindow.webContents.send('player-previous');
+            }
+          } 
+        },
+        {
+          type: 'separator'
+        },
+        { label: 'Faster', 
+          click(item, focusedWindow) { 
+            if (focusedWindow) {
+              mainWindow.webContents.send('player-faster');
+            }
+          } 
+        },
+        { label: 'Slower', 
+          click(item, focusedWindow) { 
+            if (focusedWindow) {
+              mainWindow.webContents.send('player-slower');
+            }
+          } 
+        },
+        {
+          type: 'separator'
+        },
         { label: 'Quit', 
           accelerator: 'Command+Q',
           click() { 
@@ -292,14 +365,29 @@ function createMenu() {
     {
       label: 'View',
       submenu: [
+        {
+          label: 'Reload',
+          accelerator: 'CmdOrCtrl+R',
+          click(item, focusedWindow) {
+            if (focusedWindow) {
+              focusedWindow.reload();
+            }
+          }
+        },
+        {
+          type: 'separator'
+        },
         { label: 'Toggle Desktop/Window', 
           click() { 
             toggleWindow()
           } 
         },
         { label: 'Toggle Development tools', 
-          click() { 
-            toggleDevTools()
+          accelerator: process.platform === 'darwin' ? 'Alt+Command+I' : 'Ctrl+Shift+I',
+          click(item, focusedWindow) { 
+            if (focusedWindow) {
+              toggleDevTools()
+            }
           } 
         }
       ]
@@ -312,30 +400,28 @@ function createMenu() {
 
 }
 
+createLogger()
+logger.log('info', 'startup')
 createAndCleanupBackups()
 loadConfig()
-loadDB()
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
 app.on('ready', function() {
   createWindow()
 })
 
-// Quit when all windows are closed.
 app.on('window-all-closed', function () {
-  // On OS X it is common for applications and their menu bar
-  // to stay active until the user quits explicitly with Cmd + Q
+  logger.log('info', 'shutdown')
   if (process.platform !== 'darwin') {
     app.quit()
   }
 })
 
 app.on('activate', function () {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
   if (mainWindow === null) {
     createWindow()
   }
+})
+
+electron.ipcMain.on('copy-quote', function(event, arg) {
+  electron.clipboard.writeText(arg);
 })

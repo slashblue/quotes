@@ -214,5 +214,12 @@ Quote.prototype = {
 	},
 	forJSON() {
 		return this.data;
+	},
+	forString() {
+		var text = this.getText();
+		if (this.getAuthor()) {
+			text = text + ' (' + this.getAuthor() + ')'
+		}
+		return text;
 	}
 };
