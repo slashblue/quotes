@@ -4,25 +4,25 @@ QuotesFetcher = function(requests) {
 
 QuotesFetcher.prototype = {
 	initialize: function(requests) {
-		this.type = 'QuotesFetcher';
-		this.delayStart = 250;
-		this.delayInterval = 5 * 60 * 1000; // every 5 minutes
+		this._type = 'QuotesFetcher';
+		this._delayStart = 250;
+		this._delayInterval = 5 * 60 * 1000; // every 5 minutes
 		this._specs = [];
 		this._requests = (requests || []).slice();
 		this._timerStart = null;
 		this._timerInterval = null;
 		this._onHandleQuote = function(quote, request, response) {};
 		this._onHandleUnsafeQuote = function(quote, request, response) {};
+		this._onBeforeFetch = function(request) {};
 		this._onAfterFetch = function(request, response) {};
 		this._onFetchAborted = function(request) {};
-		this._onBeforeFetch = function(request) {};
 	},
 	setUp: function() {
 		var self = this;
 		window.clearInterval(self._timerStart);
 		self._timerStart = window.setTimeout(function() {
 			self.fetchSpecs();
-		}, self.delayStart);
+		}, self._delayStart);
 	},
 	tearDown: function() {
 		this.stop();
@@ -33,7 +33,7 @@ QuotesFetcher.prototype = {
 		if (!self._timerInterval) {		
 			self._timerInterval = window.setInterval(function() {
 				self.fetchSpecs();
-			}, self.delayInterval);
+			}, self._delayInterval);
 		}
 	},
 	stop: function() {
@@ -44,16 +44,20 @@ QuotesFetcher.prototype = {
 		var self = this;
 		self._specs.push(function() {
 			self.fetch(urls, interval, function(request, response) {
-				callback(request, response, function(text, author, keywords, source, language, safe) {
-					self.handleQuote(text, author, keywords, source, language, safe, request, response);
-				});
+				try {
+					callback(request, response, function(text, author, keywords, source, language, safe) {
+						self.handleQuote(text, author, keywords, source, language, safe, request, response);
+					});
+				} catch (error) {
+					logger.log('error', 'QuotesFetcher.onCallback', { 'urls': urls, 'interval': interval, 'error': error });
+				}
 			});
 		});
 		self.start();
 	},
 	fetchSpecs: function() {
 		var self = this;
-		$(self._specs).each(function(index, each) {
+		$(self._specs || []).each(function(index, each) {
 			each();
 		});
 	},
@@ -71,19 +75,23 @@ QuotesFetcher.prototype = {
 		}
 	},
 	fetchOne: function(url, interval, callback) {
-		var request = this.newRequest(url, interval, callback);
-		if (this.canFetch(request)) {
-			this._requests.push(request);
-			if (this._onBeforeFetch) {
-				logger.log('debug', 'QuotesFetcher.onBeforeFetch', { 'url': url, 'interval': interval });
-				this._onBeforeFetch(request);
+		try {
+			var request = this.newRequest(url, interval, callback);
+			if (request.canRequest(this._requests)) {
+				this._requests.push(request);
+				if (this._onBeforeFetch) {
+					logger.log('debug', 'QuotesFetcher.onBeforeFetch', { 'url': url, 'interval': interval });
+					this._onBeforeFetch(request);
+				}
+				request.getHtml();
+			} else {
+				if (this._onFetchAborted) {
+					logger.log('debug', 'QuotesFetcher.onFetchAborted', { 'url': url, 'interval': interval });
+					this._onFetchAborted(request);
+				}
 			}
-			request.getHtml();
-		} else {
-			if (this._onFetchAborted) {
-				logger.log('debug', 'QuotesFetcher.onFetchAborted', { 'url': url, 'interval': interval });
-				this._onFetchAborted(request);
-			}
+		} catch (error) {
+			logger.log('error', 'QuotesFetcher.onFetchOne', { 'url': url, 'interval': interval, 'error': error });
 		}
 	},
 	newRequest: function(url, interval, callback) {
@@ -105,25 +113,9 @@ QuotesFetcher.prototype = {
 	},
 	fetchAll: function(urls, interval, callback) {
 		var self = this;
-		$(urls).each(function(index, each) {
+		$(urls || []).each(function(index, each) {
 			self.fetchOne(each, interval, callback);
 		});
-	},
-	canFetch: function(request) {
-		if (!request.url || !request.callback) {
-			return false;
-		}
-		if (request.interval && request.interval > 0 && this._requests && this._requests.length > 0) {
-			for (i = this._requests.length - 1; i >= 0; i--) {
-				var existingRequest = this._requests[i];
-				if (existingRequest && existingRequest.url == request.url) {
-					if (existingRequest.timestamp && existingRequest.timestamp + existingRequest.interval > $.timestamp()) {
-						return false;
-					}
-				}
-			}
-		}
-		return true;
 	},
 	onHandleQuote: function(callback) {
 		this._onHandleQuote = callback;
@@ -141,28 +133,32 @@ QuotesFetcher.prototype = {
 		this._onFetchAborted = callback;
 	},
 	handleQuote: function(text, author, keywords, source, language, safe, request, response) {
-		if (text) {
-			var safe = safe && $.isSafeText(text) && $.isSafeText(author) && $.allSatisfy(keywords, function(index, each) { return $.isSafeText(each); }) && $.isSafeText(source) && $.isSafeText(language);
-			var quote = new Quote(text, author, keywords, source, language, ((request && request.timestamp ? request.timestamp : null) || $.timestamp()), safe, request.url);;
-			if (request) {
-				request['quotes'].push(quote);
-			}
-			if (safe) {
-				if (this._onHandleQuote) {
-					logger.log('debug', 'QuotesFetcher.onHandleQuote', { 'text': text, 'author': author, 'keywords': keywords, 'source': source, 'language': language, 'safe': safe });
-					this._onHandleQuote(quote, request, response);
+		try {
+			if (text) {
+				var safe = safe && $.isSafeText(text) && $.isSafeText(author) && $.allSatisfy(keywords, function(index, each) { return $.isSafeText(each); }) && $.isSafeText(source) && $.isSafeText(language);
+				var quote = new Quote(text, author, keywords, source, language, ((request && request.timestamp ? request.timestamp : null) || $.timestamp()), safe, request.url);;
+				if (request) {
+					request['quotes'].push(quote);
 				}
-			} else {
-				if (this._onHandleUnsafeQuote) {
-					logger.log('warn', 'QuotesFetcher.onHandleUnsafeQuote', { 'text': text, 'author': author, 'keywords': keywords, 'source': source, 'language': language, 'safe': safe });
-					this._onHandleUnsafeQuote(quote, request, response);
-				} 
+				if (safe) {
+					if (this._onHandleQuote) {
+						logger.log('debug', 'QuotesFetcher.onHandleQuote', { 'text': text, 'author': author, 'keywords': keywords, 'source': source, 'language': language, 'safe': safe });
+						this._onHandleQuote(quote, request, response);
+					}
+				} else {
+					if (this._onHandleUnsafeQuote) {
+						logger.log('warn', 'QuotesFetcher.onHandleUnsafeQuote', { 'text': text, 'author': author, 'keywords': keywords, 'source': source, 'language': language, 'safe': safe });
+						this._onHandleUnsafeQuote(quote, request, response);
+					} 
+				}
 			}
+		} catch (error) {
+			logger.log('error', 'QuotesFetcher.onHandleQuote', { 'error': error, 'text': text, 'author': author, 'keywords': keywords, 'source': source, 'language': language, 'safe': safe });
 		}
 	},
 	eachRequest: function(callback) {
 		var self = this;
-		$(self._requests).each(function(index, each) {
+		$(self._requests || []).each(function(index, each) {
 			callback(index, each);
 		});
 	}

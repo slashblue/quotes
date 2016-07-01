@@ -5,7 +5,7 @@ QuotesDatabase = function(path) {
 
 QuotesDatabase.prototype = {
 	initialize: function(path) {
-		this.type = 'QuotesDatabase';
+		this._type = 'QuotesDatabase';
 		this.delaySave = 1 * 1000;
 		this._db = null;
 		this._path = path,
@@ -35,28 +35,34 @@ QuotesDatabase.prototype = {
 		if (this._path) {
 			this._db = low(this._path, { storage: require('lowdb/lib/file-async') });
 			if (this._path && this._db && this._db.get) {
-				if (this._onBeforeLoad) {
-					logger.log('debug', 'QuotesDatabase.onBeforeLoad', { 'path': this._path });
-					this._onBeforeLoad();
-				}		
 				try {
-					logger.log('info', 'QuotesDatabase._onLoad', { 'path': this._path });
-					this._quotes = Quotes.read(this._db.get('quotes').value());
-					this._requests = QuotesRequests.read(this._db.get('requests').value());
-					if (this._quotes.length == 0) {
-						this.new();
-					} else {
-						this.migrate();
+					if (this._onBeforeLoad) {
+						logger.log('debug', 'QuotesDatabase.onBeforeLoad', { 'path': this._path });
+						this._onBeforeLoad();
+					}		
+					try {
+						this._load();
+						if (this._quotes.length == 0) {
+							this.new();
+						} else {
+							this.migrate();
+							this.trim();
+						}
+					} catch (error) {
+						logger.log('error', 'QuotesDatabase.onLoadError', { 'error': error, 'path': this._path });
+						if (this._onLoadError) {
+							this._onLoadError(error);
+						}
+					}
+					if (this._onAfterLoad) {
+						logger.log('debug', 'QuotesDatabase.onAfterLoad', { 'path': this._path });
+						this._onAfterLoad();
 					}
 				} catch (error) {
-					logger.log('error', 'QuotesDatabase.onLoadError', { 'error': error, 'path': this._path });
+					logger.log('error', 'QuotesDatabase.onLoadWrappedError', { 'error': error, 'path': this._path });
 					if (this._onLoadError) {
 						this._onLoadError(error);
 					}
-				}
-				if (this._onAfterLoad) {
-					logger.log('debug', 'QuotesDatabase.onAfterLoad', { 'path': this._path });
-					this._onAfterLoad();
 				}
 			} else {
 				logger.log('error', 'QuotesDatabase.onLoad', { 'path': this._path });
@@ -70,6 +76,10 @@ QuotesDatabase.prototype = {
 			logger.log('debug', 'QuotesDatabase.onReady');
 			this._onReady();
 		}
+	},
+	_load: function() {
+		this._quotes = Quotes.read(this._db.get('quotes').value());
+		this._requests = QuotesRequests.read(this._db.get('requests').value());
 	},
 	new: function() {
 		logger.log('info', 'QuotesDatabase.onNew', { 'path': this._path });
@@ -119,9 +129,32 @@ QuotesDatabase.prototype = {
 				changes.push(quote);
 			}
 		});
+		
 		if (changes && changes.length > 0) {
-			logger.log('info', 'QuotesDatabase.onMigrate');
+			logger.log('info', 'QuotesDatabase.onMigrate', { 'changes': changes });
 			self.changed({ 'migrate': changes });
+			self.save(null, null);
+		}
+	},
+	trim: function() {
+		var self = this;
+		var changes = [];
+		for (i = 0; i < self.getQuotes().length; i++) {
+			var iQuote = self.getQuotes()[i];
+			for (j = 0; j < self.getQuotes().length; j++) {
+				var jQuote = self.getQuotes()[j];
+				if (i != j && iQuote && jQuote && iQuote.equals(jQuote)) {
+					logger.log('debug', 'QuotesDatabase.onTrim', { 'quote': jQuote, 'index': j });
+					changes.push(jQuote);
+				}
+			}
+		}
+		for (k = 0; k < changes.length; k++) {
+			self.removeQuote(changes[k]);
+		}
+		if (changes && changes.length > 0) {
+			logger.log('info', 'QuotesDatabase.onTrim', { 'changes': changes });
+			self.changed({ 'trim': changes });
 			self.save(null, null);
 		}
 	},
@@ -156,14 +189,7 @@ QuotesDatabase.prototype = {
 					logger.log('debug', 'QuotesDatabase.onBeforeSave');
 					self._onBeforeSave();
 				}
-				self._db.set('quotes', Quotes.write(self._quotes)).value();
-				// TODO -> fetcherS
-				self._db.set('requests', function(requests) {
-					if (self._onWriteRequests) {
-						self._onWriteRequests(requests);
-					}
-					return requests;
-				}([])).value();
+				self._save(request, response);
 				self._db.write();
 				if (self._onAfterSave) {
 					logger.log('debug', 'QuotesDatabase.onAfterSave');
@@ -174,6 +200,17 @@ QuotesDatabase.prototype = {
 				}
 			}
 		}
+	},
+	_save: function(request, response) {
+		var self = this;
+		self._db.set('quotes', Quotes.write(self._quotes)).value();
+		// TODO -> fetcherS
+		self._db.set('requests', function(requests) {
+			if (self._onWriteRequests) {
+				self._onWriteRequests(requests);
+			}
+			return requests;
+		}([])).value();
 	},
 	addQuote: function(quote, request, response) {
 		if (quote && quote.isValid()) {

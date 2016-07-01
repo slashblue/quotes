@@ -12,7 +12,7 @@ Quotes = {
 };
 
 Quote = function(text, author, keywords, source, language, timestamp, safe, url) {
-	this.type = 'Quote';
+	this._type = 'Quote';
 	this.data = {};
 	this.setText(text);
 	this.setAuthor(author);
@@ -117,7 +117,7 @@ Quote.prototype = {
 		return found;
 	},
 	equals: function(quote) {
-		return this.type == quote.type
+		return this._type == quote._type
 				&& (this === quote 
 					|| this == quote 
 					|| this.getHashCode() == quote.getHashCode()

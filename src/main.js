@@ -16,8 +16,8 @@ let baseDir = dirs.userData() + '/'
 let dbPath = baseDir + appName + '.json'
 let logPath = baseDir + appName + '.log'
 let optionsPath = baseDir + appName + '.conf'
-let defaultOptions = { window: { width: 800, height: 600 }, player: {} }
-let options = { window: { width: 800, height: 600 }, player: {} }
+let defaultOptions = { window: { width: 800, height: 600, icon: __dirname + '/img/logo.ico' }, player: {} }
+let options = { window: { width: 800, height: 600, icon: __dirname + '/img/logo.ico' }, player: {} }
 let mainWindow
 let mainMenu
 let timerOptions

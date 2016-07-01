@@ -17,7 +17,7 @@ QuotesRequest = function(url, interval, callback) {
 
 QuotesRequest.prototype = {
 	initialize: function(url, interval, callback) {
-		this.type = 'QuotesRequest';
+		this._type = 'QuotesRequest';
 		this.url = url;
 		this.interval = interval || (1 * 60 * 60 * 1000); // hourly by default
 		this.callback = callback;
@@ -74,14 +74,30 @@ QuotesRequest.prototype = {
 		}
 	},
 	equals: function(request) {
-		return this === request || (this.type == request.type && this.url == request.url);
+		return this === request || (typeof this == typeof request && this._type == request.type && this.url == request.url);
 	},
 	isOutdated: function() {
 		return this.timestamp + this.interval < $.timestamp();
 	},
+	canRequest: function(requests) {
+		if (!this.url || !this.callback) {
+			return false;
+		}
+		if (requests) {
+			for (i = requests.length - 1; i >= 0; i--) {
+				var request = requests[i];
+				if (this.equals(request)) {
+					if (request.timestamp && request.interval && request.timestamp + request.interval > $.timestamp()) {
+						return false;
+					}
+				}
+			}
+		}
+		return true;
+	},
 	forJSON: function() {
 		return {
-			'type': this.type,
+			'type': this._type,
 			'url': this.url,
 			'interval': this.interval,
 			'start': this.start,
@@ -91,7 +107,7 @@ QuotesRequest.prototype = {
 		}
 	},
 	fromJSON: function(data) {
-		this.type = data.type;
+		this._type = data.type;
 		this.url = data.url;
 		this.interval = data.interval;
 		this.timestamp = data.timestamp;

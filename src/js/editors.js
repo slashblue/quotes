@@ -67,7 +67,7 @@ QuotesStringEditor = function(jqNode) {
 
 QuotesStringEditor.prototype = {
 	initialize: function(jqNode) {
-		this.type = 'QuotesStringEditor';
+		this._type = 'QuotesStringEditor';
 		this._node = $(jqNode);
 		this._editor = null;
 		this._text = null;
@@ -274,7 +274,7 @@ QuotesStringEditor.prototype = {
 
 
 QuotesListEditor = function(jqNode, htmlTemplate) {
-	this.type = 'QuotesListEditor';
+	this._type = 'QuotesListEditor';
 	this._node = $(jqNode);
 	this._htmlTemplate = htmlTemplate;
 	this._editor = null;

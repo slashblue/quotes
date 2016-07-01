@@ -64,9 +64,11 @@ QuotesUI = {
 			self.updateStats();
 		});
 		self.database.onWriteRequests(function(requests) {
-			self.fetcher.eachRequest(function(index, each) {
-				requests.push(each.forJSON());
-			});
+			if (self.fetcher) {
+				self.fetcher.eachRequest(function(index, each) {
+					requests.push(each.forJSON());
+				});
+			}
 		});
 		self.database.onReady(function() {
 			self.setUpFetcher();
@@ -334,15 +336,15 @@ QuotesUI = {
 			});
 			ipc.on('player-faster', function(event, arg) {
 				self.player.faster();
-				event.sender.send('player-options', self.player.getOptions());
+				event.sender.send('player-options', self.player.options);
 			});
 			ipc.on('player-slower', function(event, arg) {
 				self.player.slower();
-				event.sender.send('player-options', self.player.getOptions());
+				event.sender.send('player-options', self.player.options);
 			});
 			ipc.on('player-reset', function(event, arg) {
 				self.player.reset();
-				event.sender.send('player-options', self.player.getOptions());
+				event.sender.send('player-options', self.player.options);
 			});
 		}
 	},

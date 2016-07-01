@@ -5,7 +5,7 @@ QuotesSearcher = function() {
 
 QuotesSearcher.prototype = {
 	initialize: function() {
-		this.type = 'QuotesSearcher';
+		this._type = 'QuotesSearcher';
 		this.searchDelay = 100;
 		this._timerSearch = null;
 		this._onEach = function(index, quote) {};
@@ -33,37 +33,37 @@ QuotesSearcher.prototype = {
 		var searchResults = [];
 		if (self.hasSearch(searchTerms)) {
 			if (self._onBeforeSearch) {
-				//logger.log('debug', 'QuotesSearcher.onBeforeSearch', { 'searchTerm': searchTerm, 'searchTerms': searchTerms });
+				logger.log('debug', 'QuotesSearcher.onBeforeSearch', { 'searchTerm': searchTerm, 'searchTerms': searchTerms });
 				self._onBeforeSearch(searchTerm, searchTerms, event);
 			}
 			searchResults = self.searchForTerms(searchTerms, function(quote) {
 				if (self._onSearch) {
-					//logger.log('debug', 'QuotesSearcher.onSearch', { 'searchTerm': searchTerm, 'searchTerms': searchTerms, 'quote': quote });
+					logger.log('debug', 'QuotesSearcher.onSearch', { 'searchTerm': searchTerm, 'searchTerms': searchTerms, 'quote': quote });
 					self._onSearch(quote, searchTerm, searchTerms, event);
 				}
 			});
 			if (!searchResults || searchResults.length == 0) {
 				if (self._onEmptySearch) {
-					//logger.log('debug', 'QuotesSearcher.onEmptySearch', { 'searchTerm': searchTerm, 'searchTerms': searchTerms, 'results': results });
+					logger.log('debug', 'QuotesSearcher.onEmptySearch', { 'searchTerm': searchTerm, 'searchTerms': searchTerms, 'searchResults': searchResults });
 					self._onEmptySearch(searchTerm, searchTerms, event);
 				}
 			}
 			if (self._onAfterSearch) {
-				//logger.log('debug', 'QuotesSearcher.onAfterSearch', { 'searchTerm': searchTerm, 'searchTerms': searchTerms, 'results': results });
+				logger.log('debug', 'QuotesSearcher.onAfterSearch', { 'searchTerm': searchTerm, 'searchTerms': searchTerms, 'searchResults': searchResults });
 				self._onAfterSearch(searchResults, searchTerm, searchTerms, event);
 			}
 		} else {
 			if (!searchTerm.trimBlanks()) {
 				if (self._onBeforeSearch) {
-					//logger.log('debug', 'QuotesSearcher.onBeforeSearch', { 'searchTerm': searchTerm, 'searchTerms': searchTerms });
+					logger.log('debug', 'QuotesSearcher.onBeforeSearch', { 'searchTerm': searchTerm, 'searchTerms': searchTerms, 'searchResults': searchResults });
 					self._onBeforeSearch(searchTerm, searchTerms, event);
 				}
 				if (self._onEmptySearch) {
-					//logger.log('debug', 'QuotesSearcher.onEmptySearch', { 'searchTerm': searchTerm, 'searchTerms': searchTerms, 'results': results });
+					logger.log('debug', 'QuotesSearcher.onEmptySearch', { 'searchTerm': searchTerm, 'searchTerms': searchTerms, 'searchResults': searchResults });
 					self._onEmptySearch(searchTerm, searchTerms, event);
 				}
 				if (self._onAfterSearch) {
-					//logger.log('debug', 'QuotesSearcher.onAfterSearch', { 'searchTerm': searchTerm, 'searchTerms': searchTerms, 'results': results });
+					logger.log('debug', 'QuotesSearcher.onAfterSearch', { 'searchTerm': searchTerm, 'searchTerms': searchTerms, 'searchResults': searchResults });
 					self._onAfterSearch(searchResults, searchTerm, searchTerms, event);
 				}
 			}

@@ -1,16 +1,21 @@
 QuotesPlayer = function(options) {
 	this.initialize(options);
+	this.initializeLocalStorage();
 	return this;
 };
 
 QuotesPlayer.prototype = {
 	initialize: function(options) {
-		this.type = 'QuotesPlayer';
-		this.setDefaultOptions();
-		this.playedFactorFaster = 0.8;
-		this.playedFactorSlower = 1.2;
-		this._playedQuotes = [];
-		this._playedQuotesIndex = -1;
+		this._type = 'QuotesPlayer';
+		this.options = $.extend({}, {
+			'interval': 10 * 1000,
+			'factorFaster': 0.8,
+			'factorSlower': 1.2
+		}, options || {});
+		this._played = {
+			'quotes': [],
+			'index': -1
+		};
 		this._timerPlayer = null;
 		this._timerPlaying = null;
 		this._timerTimestamp = null;
@@ -26,7 +31,28 @@ QuotesPlayer.prototype = {
 		this._onFaster = function(nextSpeed, previousSpeed) {};
 		this._onReset = function() {};
 		this._onSlower = function(nextSpeed, previousSpeed) {};
-		this.setOptions(options);
+	},
+	initializeLocalStorage: function() {
+		if (window.localStorage && localStorage) {
+			try {
+				var _played = JSON.parse(localStorage.getItem('QuotesPlayer._played') || '{}');
+				if (_played && typeof _played == 'object' && _played.hasOwnProperty('quotes') && _played.hasOwnProperty('index')) {
+					this._played = _played;
+				} else {
+					this.updateLocalStorage();
+				}
+			} catch (error) {
+				logger.log('error', 'QuotesPlayer.onInitializeLocalStorage', { 'error': error });
+			}
+			
+		}
+	},
+	updateLocalStorage: function() {
+		if (window.localStorage && localStorage) {
+			if (this._played && typeof _played == 'object') {
+				localStorage.setItem('QuotesPlayer._played', JSON.stringify(this._played));
+			}
+		}
 	},
 	setUp: function() {
 		var currentQuote = this.nextQuote(0);
@@ -105,7 +131,7 @@ QuotesPlayer.prototype = {
 		self._timerPlayer = window.setInterval(function() {
 			self._timerTimestamp = $.timestamp();
 			self.next(event);
-		}, self.playedInterval);
+		}, self.options.interval);
 	},
 	previous: function(event) {
 		var previousQuote = this.currentQuote();
@@ -116,25 +142,25 @@ QuotesPlayer.prototype = {
 		}
 	},
 	faster: function() {
-		var previousPlayedInterval = this.playedInterval
-		this.playedInterval = this.playedFactorFaster * this.playedInterval;
+		var previousPlayedInterval = this.options.interval
+		this.options.interval = this.options.factorFaster * this.options.interval;
 		this.restart();
 		if (this._onFaster) {
-			logger.log('debug', 'QuotesPlayer.onFaster', { 'previous': previousPlayedInterval, 'next': this.playedInterval });
-			this._onFaster(this.playedInterval, previousPlayedInterval);
+			logger.log('debug', 'QuotesPlayer.onFaster', { 'previous': previousPlayedInterval, 'next': this.options.interval });
+			this._onFaster(this.options.interval, previousPlayedInterval);
 		}
 	},
 	slower: function() {
-		var previousPlayedInterval = this.playedInterval
-		this.playedInterval = this.playedFactorSlower * this.playedInterval;
+		var previousPlayedInterval = this.options.interval
+		this.options.interval = this.options.factorSlower * this.options.interval;
 		this.restart();
 		if (this._onSlower) {
-			logger.log('debug', 'QuotesPlayer.onSlower', { 'previous': previousPlayedInterval, 'next': this.playedInterval });
-			this._onSlower(this.playedInterval, previousPlayedInterval);
+			logger.log('debug', 'QuotesPlayer.onSlower', { 'previous': previousPlayedInterval, 'next': this.options.interval });
+			this._onSlower(this.options.interval, previousPlayedInterval);
 		}
 	},
 	reset: function() {
-		this.setDefaultOptions();
+		this.options.interval = 10 * 1000;
 		if (this._onReset) {
 			logger.log('debug', 'QuotesPlayer.onReset');
 			this._onReset();
@@ -145,7 +171,7 @@ QuotesPlayer.prototype = {
 		if (self.isPlaying()) {	
 			window.clearInterval(self._timerPlayer);
 			window.clearTimeout(self._timerRestart);
-			var diff = Math.min(self.playedInterval , Math.max(0, self._timerTimestamp ? self._timerTimestamp + self.playedInterval - $.timestamp() : self.playedInterval));	
+			var diff = Math.min(self.options.interval , Math.max(0, self._timerTimestamp ? self._timerTimestamp + self.options.interval - $.timestamp() : self.options.interval));	
 			logger.log('debug', 'QuotesPlayer.onRestart', { 'diff': diff });
 			self._timerRestart = window.setTimeout(function() {
 				self.next();
@@ -183,40 +209,34 @@ QuotesPlayer.prototype = {
 	onSlower: function(callback) {
 		this._onSlower = callback;
 	},
+	onReset: function(callback) {
+		this._onReset = callback;
+	},
 	previousQuote: function() {
 		return this.nextQuote(-1);
 	},
 	currentQuote: function() {
-		return this._playedQuotes[this._playedQuotesIndex] || {};
+		return this._played.quotes[this._played.index] || {};
 	},
 	nextQuote: function(offset) {
-		var index = Math.max(this._playedQuotesIndex + offset, 0);
-		var quote = this._playedQuotes[index];
+		var self = this;
+		var index = Math.max(self._played.index + offset, 0);
+		var quote = self._played.quotes[index];
 		while (!quote) {
 			var pickedQuote = null;
-			if (this._onPick) {
-				pickedQuote = this._onPick();
+			if (self._onPick) {
+				pickedQuote = self._onPick();
 			}
 			if (!pickedQuote) {
 				return null;
 			}
-			this._playedQuotes.push(pickedQuote);
-			quote = this._playedQuotes[index];
+			self._played.quotes.push(pickedQuote);
+			quote = self._played.quotes[index];
 		}
-		this._playedQuotesIndex = index;
+		self._played.index = index;
+		window.setTimeout(function() {
+			self.updateLocalStorage();
+		}, 100);
 		return quote;
-	},
-	setDefaultOptions: function() {
-		this.playedInterval = 10 * 1000;
-	},
-	setOptions: function(options) {
-		if (options) {
-			this.playedInterval = options.playedInterval || this.playedInterval;
-		}
-	},
-	getOptions: function() {
-		return {
-			'playedInterval': this.playedInterval
-		};
 	}
 };
