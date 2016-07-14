@@ -15,8 +15,9 @@ let baseDir = dirs.userData() + '/'
 let dbPath = baseDir + appName + '.json'
 let logPath = baseDir + appName + '.log'
 let optionsPath = baseDir + appName + '.conf'
-let defaultOptions = { window: { width: 800, height: 600, icon: __dirname + '/img/logo.png' }, player: {} }
-let options = { window: { width: 800, height: 600, icon: __dirname + '/img/logo.png' }, player: {} }
+let globalOptions = { window: { title: appName, icon: __dirname + '/img/logo.png' } }
+let defaultOptions = { window: { width: 800, height: 600 }, player: {} }
+let options = { window: { width: 800, height: 600 }, player: {} }
 let mainWindow
 let mainMenu
 let timerOptions
@@ -205,11 +206,28 @@ function toggleDevTools() {
 
 }
 
+function getWindowOptions () {
+  var options = {}
+  var _globalOptions = globalOptions.window || defaultOptions.window || {}
+  var _options = options.window || defaultOptions.window || {}
+  for (key in _globalOptions) {
+    if (_globalOptions.hasOwnProperty(key)) {
+      options[key] = _globalOptions[key]
+    }
+  }
+  for (key in _options) {
+    if (_options.hasOwnProperty(key)) {
+      options[key] = _options[key]
+    }
+  }
+ return options;
+}
+
 function createWindow () {
   
   loadGlobals()
 
-  mainWindow = new electron.BrowserWindow(options.window)
+  mainWindow = new electron.BrowserWindow(getWindowOptions())
 
   mainWindow.loadURL(`file://${__dirname}/index.html`)
 
@@ -256,9 +274,7 @@ function createMenu() {
       submenu: [
         { label: 'Copy Quote', 
           click(item, focusedWindow) { 
-            if (focusedWindow) {
-              mainWindow.webContents.send('copy-quote');
-            }
+            mainWindow.webContents.send('copy-quote');
           } 
         },
         {
@@ -266,23 +282,17 @@ function createMenu() {
         },
         { label: 'Toggle Play/Pause', 
           click(item, focusedWindow) { 
-            if (focusedWindow) {
-              mainWindow.webContents.send('player-toggle');
-            }
+            mainWindow.webContents.send('player-toggle');
           } 
         },
         { label: 'Next', 
           click(item, focusedWindow) { 
-            if (focusedWindow) {
-              mainWindow.webContents.send('player-next');
-            }
+            mainWindow.webContents.send('player-next');
           } 
         },
         { label: 'Previous', 
           click(item, focusedWindow) { 
-            if (focusedWindow) {
-              mainWindow.webContents.send('player-previous');
-            }
+            mainWindow.webContents.send('player-previous');
           } 
         },
         {
@@ -290,23 +300,17 @@ function createMenu() {
         },
         { label: 'Faster', 
           click(item, focusedWindow) { 
-            if (focusedWindow) {
-              mainWindow.webContents.send('player-faster');
-            }
+            mainWindow.webContents.send('player-faster');
           } 
         },
         { label: 'Slower', 
           click(item, focusedWindow) { 
-            if (focusedWindow) {
-              mainWindow.webContents.send('player-slower');
-            }
+            mainWindow.webContents.send('player-slower');
           } 
         },
         { label: 'Reset Defaults', 
           click(item, focusedWindow) { 
-            if (focusedWindow) {
-              mainWindow.webContents.send('player-reset');
-            }
+            mainWindow.webContents.send('player-reset');
           } 
         },
         {
@@ -375,9 +379,7 @@ function createMenu() {
           label: 'Reload',
           accelerator: 'CmdOrCtrl+R',
           click(item, focusedWindow) {
-            if (focusedWindow) {
-              focusedWindow.reload();
-            }
+            focusedWindow.reload()
           }
         },
         {
@@ -391,18 +393,16 @@ function createMenu() {
         { label: 'Toggle Development tools', 
           accelerator: process.platform === 'darwin' ? 'Alt+Command+I' : 'Ctrl+Shift+I',
           click(item, focusedWindow) { 
-            if (focusedWindow) {
-              toggleDevTools()
-            }
+            toggleDevTools()
           } 
         }
       ]
     }
   ]
   
-  mainMenu = electron.Menu.buildFromTemplate(template);
+  mainMenu = electron.Menu.buildFromTemplate(template)
 
-  electron.Menu.setApplicationMenu(mainMenu);
+  electron.Menu.setApplicationMenu(mainMenu)
 
 }
 
