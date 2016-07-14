@@ -5,7 +5,6 @@ const os = require('os')
 const low = require('lowdb')
 const fileAsync = require('lowdb/lib/file-async')
 const zlib = require('zlib')
-const gzipme = require('gzipme')
 const winston = require('winston')
 const logrotate = require('winston-logrotate')
 const appdirectory = require('appdirectory')
@@ -16,8 +15,8 @@ let baseDir = dirs.userData() + '/'
 let dbPath = baseDir + appName + '.json'
 let logPath = baseDir + appName + '.log'
 let optionsPath = baseDir + appName + '.conf'
-let defaultOptions = { window: { width: 800, height: 600, icon: __dirname + '/img/logo.ico' }, player: {} }
-let options = { window: { width: 800, height: 600, icon: __dirname + '/img/logo.ico' }, player: {} }
+let defaultOptions = { window: { width: 800, height: 600, icon: __dirname + '/img/logo.png' }, player: {} }
+let options = { window: { width: 800, height: 600, icon: __dirname + '/img/logo.png' }, player: {} }
 let mainWindow
 let mainMenu
 let timerOptions

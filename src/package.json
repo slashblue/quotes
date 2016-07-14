@@ -1,6 +1,6 @@
 {
   "name": "quotes",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "A simple widget playing quotes on the desktop",
   "license": "MIT",
   "author": {
@@ -8,15 +8,14 @@
     "email": "stefan.reichhart@gmail.com",
     "url": "https://github.com/slashblue/quotes"
   },
-  "repository" : { 
-     "type" : "git",
-     "url": "https://github.com/slashblue/quotes"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/slashblue/quotes"
   },
   "main": "main.js",
   "scripts": {
     "test": "xo",
-    "start": "electron main.js",
-    "build": "electron-packager . --overwrite --all"
+    "start": "electron main.js"
   },
   "files": [
     "js/*.js",
@@ -24,19 +23,30 @@
   ],
   "devDependencies": {
     "electron": "^0.4.1",
-    "electron-debug": "^1.0.0",
-    "electron-packager": "^7.0.4",
-    "electron-prebuilt": "^1.2.0"
+    "electron-debug": "^1.0.1",
+    "electron-packager": "^7.3.0",
+    "electron-prebuilt": "^1.2.7"
   },
   "dependencies": {
     "appdirectory": "^0.1.0",
-    "jquery": "^3.0.0",
-    "jquery-ui": "^1.10.5",
+    "electron": "^0.4.1",
+    "electron-debug": "^1.0.1",
+    "electron-json-storage": "^2.0.0",
+    "electron-packager": "^7.3.0",
+    "electron-prebuilt": "^1.2.7",
+    "jquery": "^3.1.0",
+    "jquery-ui": "^1.12.0",
     "jquery.scrollto": "^2.1.2",
     "lodash": "^4.13.1",
     "lowdb": "^0.13.1",
     "winston": "^2.2.0",
     "winston-logrotate": "^1.0.0"
   },
-  "os" : [ "darwin" ]
+  "os": [
+    "darwin"
+  ],
+  "cpu" : [ 
+    "x64" 
+  ],
+  "private": true
 }
