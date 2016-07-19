@@ -34,6 +34,31 @@ $.anySatisfy = function(array, callback) {
 	return false;
 };
 
+$.gather = function(array, callback) {
+	var gathered = [];
+	if (array) {
+		for (i in array) {
+			var subarray = callback(i, array[i]) || [];
+			if (subarray) {
+				for (j in subarray) {
+					gathered.push(subarray[j]);
+				}
+			}
+		}
+	}
+	return gathered;
+};
+
+$.collect = function(array, callback) {
+	var collected = [];
+	if (array) {
+		for (i in array) {
+			collected.push(callback(i, array[i]));
+		}
+	}
+	return gathered;
+};
+
 $.unique = function(list) {
 	var result = [];
 	$.each(list, function(index, each) {

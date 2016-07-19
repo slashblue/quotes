@@ -26,6 +26,12 @@ fi
 
 APP_VERSION=`cat "./package.json" | grep "version" | egrep -o '[0-9]+.[0-9]+.[0-9]+'`
 
+echo "Building app $APP_VERSION / $BUILD_VERSION"
 electron-packager . "Quotes" --platform=darwin --arch=x64 --app-version="$APP_VERSION" --build-version="$BUILD_VERSION" --icon ./img/logo.icns
 
-electron-packager . "Quotes" --platform=win32 --arch=x64 --app-version="$APP_VERSION" --build-version="$BUILD_VERSION" --icon ./img/logo.ico
+if [ -f Quotes-darwin-x64/Quotes.app/Contents/Resources/electron.icns ]; then
+	echo "Replacing icon ..."
+	cp ./img/icon.icns Quotes-darwin-x64/Quotes.app/Contents/Resources/electron.icns
+fi
+
+#electron-packager . "Quotes" --platform=win32 --arch=x64 --app-version="$APP_VERSION" --build-version="$BUILD_VERSION" --icon ./img/logo.ico
