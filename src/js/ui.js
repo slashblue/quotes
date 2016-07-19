@@ -12,6 +12,7 @@ QuotesUI = {
 	fetcher: null,
 	searcher: null,
 	player: null,
+	importers: null,
 	setUp: function(event) {
 		try {
 			logger.log('info', 'QuotesUI.setUp');
@@ -83,6 +84,7 @@ QuotesUI = {
 			self.setUpFetcher();
 			self.setUpPlayer();
 			self.setUpSearcher();
+			self.setupImporters();
 			self.setUpControl();
 			self.setupMainWindow();
 		});
@@ -268,6 +270,18 @@ QuotesUI = {
 		});
 		self.searcher.setUp();
 	},
+	setupImporters: function() {
+		var self = this;
+		self.importers = [ ];
+		var jsonImporter = new QuotesImporterJSON();
+		jsonImporter.onQuotes(function(json) {
+			return Quotes.read(json['quotes']);
+		});
+		jsonImporter.onQuote(function(quote) {
+			self.database.addQuote(quote);
+		});
+		self.importers.push(jsonImporter);
+	},
 	setUpControl: function() {
 		var self = this;
 		$('.tab').on('click.quotes', function(event) {
@@ -354,6 +368,9 @@ QuotesUI = {
 			ipc.on('player-reset', function(event, arg) {
 				self.player.reset();
 				event.sender.send('player-options', self.player.options);
+			});
+			ipc.on('import-quotes', function(event, arg) {
+				QuotesImporters.import(self.database, self.importers, arg, event);
 			});
 		}
 	},

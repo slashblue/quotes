@@ -59,6 +59,23 @@ function loadGlobals() {
 
 }
 
+
+function importFiles(filenames) {
+
+  if (filenames) {
+    for (index in filenames) {
+      fs.readFile(filenames[index], 'utf8', function(err, data) {
+        if (!err) {
+          mainWindow.webContents.send('import-quotes', { 'path': filenames[index], 'data': data })
+        } else {
+          throw err
+        }
+      })
+    }
+  }
+  
+}
+
 function pad(n, width, z) {
 
   n = n + '';
@@ -272,6 +289,21 @@ function createMenu() {
     {
       label: 'Main',
       submenu: [
+        { label: 'Import ...', 
+          click(item, focusedWindow) { 
+            electron.dialog.showOpenDialog({
+              properties: [ 'openFile' ],
+              filters: [
+                { name: 'Quotes', extensions: [ 'json' ]}
+              ]
+            }, function(filenames) {
+              importFiles(filenames)
+            })
+          } 
+        },
+        {
+          type: 'separator'
+        },
         { label: 'Copy Quote', 
           click(item, focusedWindow) { 
             mainWindow.webContents.send('copy-quote');
