@@ -1,4 +1,8 @@
-if (winston && winston.Logger) {
+/*
+ * @requires settings.js
+ */
+
+ if (winston && winston.Logger) {
 	logger = window.logger = new (winston.Logger)({
 		transports: [
 			new (winston.transports.Console)({ 

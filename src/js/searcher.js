@@ -1,4 +1,8 @@
-QuotesSearcher = function() {
+/*
+ * @requires database.js
+ */
+
+ QuotesSearcher = function() {
 	this.initialize();
 	return this;
 };

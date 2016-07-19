@@ -1,4 +1,8 @@
-QuotesRequests = {
+/*
+ * @requires common.js
+ */
+
+ QuotesRequests = {
 	create: function() {
 		return [];
 	},

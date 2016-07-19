@@ -1,3 +1,12 @@
+/*
+ * @requires external/jquery.scrollTo.min.js
+ * @requires database.js
+ * @requires fetcher.js
+ * @requires editors.js
+ * @requires searcher.js
+ * @requires player.js
+ */
+
 QuotesUI = {
 	database: null,
 	fetcher: null,

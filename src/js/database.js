@@ -1,4 +1,10 @@
-QuotesDatabase = function(path) {
+/*
+ * @requires external/lodash.min.js
+ * @requires external/lowdb.min.js
+ * @requires quote.js
+ * @requires request.js
+ */
+ QuotesDatabase = function(path) {
 	this.initialize(path);
 	return this;
 };

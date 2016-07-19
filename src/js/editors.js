@@ -1,4 +1,9 @@
-QuotesEditors = {
+/*
+ * @requires common.js
+ * @requires quote.js
+ */
+
+ QuotesEditors = {
 	setUp: function() {
 		var self = this;
 		$(document).on('keydown.globaleditor', function(event) {

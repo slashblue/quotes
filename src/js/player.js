@@ -1,4 +1,8 @@
-QuotesPlayer = function(options) {
+/*
+ * @requires database.js
+ */
+
+ QuotesPlayer = function(options) {
 	this.initialize(options);
 	this.initializeLocalStorage();
 	return this;

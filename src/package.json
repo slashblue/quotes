@@ -25,7 +25,11 @@
     "electron": "^0.4.1",
     "electron-debug": "^1.0.1",
     "electron-packager": "^7.3.0",
-    "electron-prebuilt": "^1.2.7"
+    "electron-prebuilt": "^1.2.7",
+    "gulp": "^3.9.1",
+    "gulp-concat": "^2.6.0",
+    "gulp-resolve-dependencies": "^2.2.0",
+    "gulp-watch": "^4.3.8"
   },
   "dependencies": {
     "appdirectory": "^0.1.0",
@@ -45,8 +49,8 @@
   "os": [
     "darwin"
   ],
-  "cpu" : [ 
-    "x64" 
+  "cpu": [
+    "x64"
   ],
   "private": true
 }
