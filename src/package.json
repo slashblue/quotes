@@ -14,7 +14,6 @@
   },
   "main": "main.js",
   "scripts": {
-    "test": "xo",
     "start": "electron main.js"
   },
   "files": [
