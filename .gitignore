@@ -4,6 +4,7 @@
 **/node_modules
 *.app
 **/Quotes-*
+**/homelib
 
 # osx
 *DS_Store

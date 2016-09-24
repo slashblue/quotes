@@ -1,1 +1,3 @@
 # quotes
+
+First bumpy steps with node, electron, ...
