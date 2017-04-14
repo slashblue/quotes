@@ -12,6 +12,55 @@
 	},
 	write: function(array) {
 		return $($.grep($(array || []), function(each) { return !!each; })).map(function(index, each) { return each.forJSON(); }).toArray();
+	},
+	getLanguages: function(quotes) {
+		var languages = [];
+		$(quotes).each(function(index, each) {
+			if (each.getLanguage()) {
+				languages.push(each.getLanguage());
+			}
+		});
+		return $.unique(languages);
+	},
+	getKeywords: function(quotes, numberOfElements, newMinValue, newMaxValue) {
+		var selectedKeywords = [];
+		var numberOfElements = numberOfElements || 10;
+		if (numberOfElements) {
+			var keywordAndCounter = {};
+			$(quotes || []).each(function(indexQuote, eachQuote) {
+				$(eachQuote.getKeywords() || []).each(function(indexKeywords, eachKeyword) {
+					keywordAndCounter[eachKeyword] = (keywordAndCounter[eachKeyword] || 0) + 1;
+				});
+			});
+			var counterAndKeywords = {};
+			$(Object.entries(keywordAndCounter)).each(function(index, each) {
+				var entry = counterAndKeywords[each[1]];
+				if (!entry) {
+					counterAndKeywords[each[1]] = entry = [];
+				}
+				entry.push(each[0]);
+			});
+			var counters = $.grep($.unique(Object.values(keywordAndCounter)), function(each) { return typeof each === 'number'; }).sort(function(a, b) { return b - a; });
+			$(counters).each(function(index, each) {
+				$(counterAndKeywords[each]).each(function(indexKeyword, eachKeyword) {
+					if (selectedKeywords.length < numberOfElements) {
+						selectedKeywords.push([ eachKeyword, each ]);
+						return true;
+					} else {
+						return false;
+					}
+				});
+			});
+			var newMaxValue = newMaxValue || 10;
+			var newMinValue = newMinValue || 1;
+			var maxValue = selectedKeywords[0][1];
+			var minValue = selectedKeywords[selectedKeywords.length-1][1];
+			var normalization = (newMaxValue - newMinValue) / (maxValue - minValue);
+			$(selectedKeywords).each(function(index, each) {
+				each.push(Math.round(normalization * (each[1] - minValue) + newMinValue));
+			});
+		}
+		return selectedKeywords;
 	}
 };
 
@@ -211,6 +260,12 @@ Quote.prototype = {
 			return true;
 		}
 		return false;
+	},
+	matchesLanguage: function(language) {
+		this.getLanguage() == language;
+	},
+	matchesKeyword: function(keyword) {
+		return $.anySatisfy(this.getKeywords(), function(index, each) { return each == keyword; });
 	},
 	fromJSON(data) {
 		this.data = data;

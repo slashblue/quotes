@@ -2,7 +2,7 @@
  * @requires external/sha1.js
  */
 
- String.prototype.capitalize = function() {
+String.prototype.capitalize = function() {
     return this.charAt(0).toUpperCase() + this.slice(1);
 };
 
@@ -172,4 +172,12 @@ $.swapNameFragments = function(text) {
 		return $.normalize(fragments[1]) + ' ' + $.normalize(fragments[0]);
 	}
 	return text;
+};
+
+$.shuffle = function(array) {
+    for (let i = array.length; i; i--) {
+        let j = Math.floor(Math.random() * i);
+        [array[i - 1], array[j]] = [array[j], array[i - 1]];
+    }
+    return array;
 };
