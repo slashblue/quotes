@@ -117,13 +117,13 @@ $.isSameArray = function(array1, array2) {
 	if (array1 && array2 && array1.length != array2.length) {
 		return false;
 	}
-	for (var object in array1) {
-		if (!$.inArray(object, array2)) {
+	for (var index in array1) {
+		if ($.inArray(array1[index], array2) < 0) {
 			return false;
 		}
 	}
-	for (var object in array2) {
-		if (!$.inArray(object, array1)) {
+	for (var index in array2) {
+		if ($.inArray(array2[index], array1) < 0) {
 			return false;
 		}
 	}

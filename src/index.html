@@ -4,28 +4,44 @@
     <head>
         <meta charset="UTF-8">
         <link rel="stylesheet" href="./css/styles.css">
+        <link rel="stylesheet" href="./css/fontello.css">
+        <link rel="stylesheet" href="./css/animation.css">
 	<title>Quotes</title>
     </head>
 
-    <body>
-        <ul id="tabs">
-            <li><a href="#tab-content-1" id="tab-play" class="tab tab-active tab-playing">Play</a></li>
-            <li><a href="#tab-content-2" id="tab-search" class="tab">Search</a></li>
-        </ul>
-        <div id="tab-content-1" class="tab-content tab-content-play tab-content-active">
-            <div class="nav">
-                <a id="previousQuote"><</a>
-                <a id="nextQuote">></a>
+    <body class="loading">
+        <i class="icon-spinner animate-spin"></i>
+        <div class="contents">
+            <ul id="tabs">
+                <li>
+                    <a href="#tab-content-1" id="tab-play" class="tab tab-active tab-playing">
+                        <i class="icon-play"></i><i class="icon-pause"></i>Play
+                    </a>
+                </li>
+                <li><a href="#tab-content-2" id="tab-search" class="tab icon-search">Search</a></li>
+                <li><a href="#tab-content-3" id="tab-history" class="tab icon-history">History</a></li>
+            </ul>
+            <div id="tab-content-1" class="tab-content tab-content-play tab-content-active">
+                <div class="nav">
+                    <a id="previousQuote" class="icon-left-open"></a>
+                    <a id="nextQuote" class="icon-right-open"></a>
+                </div>
+                <div id="quote"></div>
             </div>
-            <div id="quote"></div>
-        </div>
-        <div id="tab-content-2" class="tab-content tab-content-search">
-            <form id="search" default="return false;">
-                <input id="searchText" type="text">
-                <p id="stats"></p>
-            </form>
-            <div class="content">
-                <ul id="quotes"></ul>
+            <div id="tab-content-2" class="tab-content tab-content-search">
+                <form id="search" default="return false;">
+                    <input id="searchText" type="text">
+                    <p id="stats"></p>
+                </form>
+                <div class="content">
+                    <ul id="searchQuotes"></ul>
+                </div>
+            </div>
+            <div id="tab-content-3" class="tab-content tab-content-history">
+                <div class="content">
+                    <ul id="historyQuotes"></ul>
+                    <a id="historyMore" class="icon-down-open"></a>
+                </div>
             </div>
         </div>
         <script>window.electron = require('electron');</script>
@@ -50,6 +66,7 @@
         <script src="./js/editors.js"></script>
         <script src="./js/player.js"></script>
         <script src="./js/searcher.js"></script>
+        <script src="./js/history.js"></script>
         <script src="./js/importer.js"></script>
         <script src="./js/ui.js"></script>
     </body>

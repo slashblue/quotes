@@ -13,6 +13,7 @@ QuotesUI = {
 	searcher: null,
 	player: null,
 	importers: null,
+	history: null,
 	setUp: function(event) {
 		try {
 			logger.log('info', 'QuotesUI.setUp');
@@ -84,6 +85,7 @@ QuotesUI = {
 			self.setUpFetcher();
 			self.setUpPlayer();
 			self.setUpSearcher();
+			self.setupHistory();
 			self.setupImporters();
 			self.setUpControl();
 			self.setupMainWindow();
@@ -100,6 +102,12 @@ QuotesUI = {
 			self.database.addQuote(quote, request, response);
 		});
 		self.fetcher.onAfterFetch(function(request, response) {
+			var message = 'Found ' + request.quotes.length + ' quotes at url: ' + request.url;
+			if (request.quotes.length > 0) {
+				logger.log('info', message);
+			} else {
+				logger.log('warn', message);
+			}
 			self.database.saveDelayed(request, response);
 		});
 		self.fetcher.register('http://www.brainyquote.com/quotes_of_the_day.html', 1 * 60 * 60 * 1000, function(request, response, handler) {
@@ -255,12 +263,12 @@ QuotesUI = {
 		});
 		self.searcher.onBeforeSearch(function(searchTerm, searchTerms, event) {
 			QuotesEditors.detach(null);
-			$('#quotes').empty();
+			$('#searchQuotes').empty();
 		});
 		self.searcher.onSearch(function(quote, searchTerm, searchTerms, event) {
 			var node = $('<li class="quote"></li>')
 			self.appendQuote(quote, node);
-			$('#quotes').append(node);
+			$('#searchQuotes').append(node);
 		});
 		self.searcher.onEmptySearch(function(searchTerm, searchTerms, event){
 			self.updateStats([]);
@@ -269,6 +277,22 @@ QuotesUI = {
 			self.updateStats(quotes);
 		});
 		self.searcher.setUp();
+	},
+	setupHistory: function() {
+		var self = this;
+		self.history = new QuotesHistory();
+		self.history.onRefresh(function() {
+			$('#historyQuotes').empty();
+			return self.database.getQuotes();
+		});
+		self.history.onBeforeQuote(function(timestamp, quote) {
+			$('#historyQuotes').append($("<li class='quote quote-separator'><h2>" + timestamp + "</h2></li>"));
+		});
+		self.history.onQuote(function(quote) {
+			var node = $('<li class="quote"></li>')
+			self.appendQuote(quote, node);
+			$('#historyQuotes').append(node);
+		});
 	},
 	setupImporters: function() {
 		var self = this;
@@ -340,13 +364,19 @@ QuotesUI = {
 		$('#tab-search').on('click.quotes', function(event) {
 			$('#searchText').focus();
 		});
+		$('#tab-history').on('click.quotes', function(event) {
+			self.history.refresh();
+		});
+		$('#historyMore').on('click.quotes', function(event) {
+			self.history.showMore();
+		});
 	},
 	setupMainWindow: function() {
 		var self = this;
 		if (window && window.electron && window.electron.ipcRenderer) {
 			var ipc = window.electron.ipcRenderer;
 			ipc.on('copy-quote', function(event, arg) {
-				event.sender.send('copy-quote', self.player.currentQuote().forString());
+				event.sender.send('copy-quote', self.player.currentQuote().toString());
 			});
 			ipc.on('player-toggle', function(event, arg) {
 				self.player.toggle();
@@ -373,6 +403,7 @@ QuotesUI = {
 				QuotesImporters.import(self.database, self.importers, arg, event);
 			});
 		}
+		$("body").removeClass("loading").addClass("loaded");
 	},
 	tearDown: function(event) {
 		try {
@@ -381,6 +412,7 @@ QuotesUI = {
 			this.fetcher.tearDown();
 			this.player.tearDown();	
 			this.searcher.tearDown();
+			this.history.tearDown();
 		} catch (error) {
 			logger.log('error', 'QuotesUI.tearDown', { 'error': error });
 		}
@@ -417,18 +449,30 @@ QuotesUI = {
 				jqNode.append(nodeUrl);
 			}
 			var controls = $('<div class="controls"></div>');
-			var buttonSave = $('<a class="control save">save</a>');
+			var buttonSave = $('<a class="control save icon-ok" title="save"></a>');
 			buttonSave.on('click.editor', function(event) {
 				QuotesEditors.each(function(each) {
 					each.save();
 				}, jqNode) ;
 			});
-			var buttonDelete = $('<a class="control delete">delete</a>');
+			var buttonCancel = $('<a class="control save icon-ccw" title="cancel"></a>');
+			buttonCancel.on('click.editor', function(event) {
+				QuotesEditors.each(function(each) {
+					each.abort();
+				}, jqNode) ;
+			});
+			var buttonCopy= $('<a class="control copy icon-docs" title="copy to clipboard"></a>');
+			buttonCopy.on('click.editor', function(event) {
+				window.electron.ipcRenderer.send("copy-quote", quote.toString());
+			});
+			var buttonDelete = $('<a class="control delete icon-trash-empty" title="delete"></a>');
 			buttonDelete.on('click.editor', function(event) {
 				self.database.removeQuote(quote);
 				jqNode.remove();
 			});
 			buttonSave.appendTo(controls);
+			buttonCancel.appendTo(controls);
+			buttonCopy.appendTo(controls);
 			buttonDelete.appendTo(controls);
 			controls.appendTo(jqNode);
 		}
@@ -449,7 +493,6 @@ QuotesUI = {
 			callback(newValue);
 			quote.change();
 			self.database.changed({ 'edit': [ quote ]});
-			self.player.resume(event);
 			return true;
 		});
 		editor.onChange(function(event) {
@@ -459,7 +502,6 @@ QuotesUI = {
 			self.player.suspend(event);
 		});
 		editor.onCancel(function(event) {
-			self.player.resume(event);
 		});
 		editor.attach();
 	},

@@ -56,7 +56,7 @@ body {
 	float: left;
 	padding: 10px;
 	list-style: none;
-	border-bottom: 1px solid lightgray;
+	border-bottom: 1px solid #f0f0f0;
 }
 
 .quote-text {
@@ -86,14 +86,17 @@ body {
 	margin: 5px 0px 5px 0px;
 }
 
-.quote-keyword {
+.quote-keyword,
+.quote-keywords .editor  {
 	position: relative;
-	padding: 2px 4px 2px 4px;
+	padding: 2px 6px 2px 6px;
 	margin: 5px;
-	border: 1px solid lightgray;
-	background-color: lightgray;
 	border-radius: 8px;
 	float: left;
+}
+.quote-keyword {
+	border: 1px solid #f0f0f0;
+	background-color: #f0f0f0;
 }
 
 .quote-url {
@@ -104,7 +107,7 @@ body {
 	width: 100%;
 }
 .quote:hover {
-	background-color: #efefef;
+	background-color: #fafafa;
 }
 
 .tab {
@@ -112,12 +115,12 @@ body {
 	text-align: center;
 	padding: 4px 8px 4px 8px;
 	margin: 5px;
-	border: 1px solid lightgray;
+	border: 1px solid #f0f0f0;
 }
 
 .tab-active {
 	font-color: bold ;
-	background-color: lightgray;	
+	background-color: #f0f0f0;	
 }
 
 .tab-content {
@@ -126,7 +129,7 @@ body {
 	float: left;
 	width: 100%;
 	margin-top: 3px;
-	border-top: 1px solid lightgray;
+	border-top: 1px solid #f0f0f0;
 }
 
 .tab-content-active {
@@ -148,7 +151,8 @@ body {
 #nextQuote {
 	text-align: center;
 	position: absolute;
-	top: 45px;
+	padding: 10px;
+	top: 35px;
 	width: 40px;
 	z-index: 1;
 }
@@ -211,18 +215,20 @@ body {
     -o-transition: all 0.25s ease-in;
     transition: all 0.25s ease-in;
 }
-
-#tab-play:after {
-	content: ' || ';
+.icon-play,
+.tab-playing > .icon-pause {
+	display: none;
+}
+.tab-playing > .icon-play,
+.icon-pause {
+	display: inline;
 }
 
-#tab-play.tab-playing:after {
-	content: ' > ';
-}
 
 .controls {
 	position: absolute;
-	top: -13px;
+	top: -38px;
+	padding: 20px;
 	right: 10px;
 	display: none;
 }
@@ -234,16 +240,33 @@ body {
 .control {
 	position: relative;
 	float: left;
-	border: 1px solid black;
-	border-radius: 10px;
-	padding: 2px 8px 4px 8px;
-	background-color: #efefef;
-	margin-left: 10px;
+	border-radius: 40px;
+	border: 1px solid #f0f0f0;
+	padding: 8px 8px 8px 8px;
+	background-color: #fafafa;
+	margin-left: 12px;
 }
-
 
 .control:hover {
 	font-style: bold;
+	background-color: white;
+	box-shadow: 0px 0px 24px 0px;
+}
+
+.icon-trash-empty:hover {
+	color: red;
+}
+
+.icon-ok:hover {
+	color: green;
+}
+
+.icon-ccw:hover {
+	color: orange;
+}
+
+.icon-docs:hover {
+	color: purple;
 }
 
 .save {
@@ -283,4 +306,31 @@ body {
 
 #quote .quote-author {
 	font-size: 1.2em;
+}
+#historyMore {
+	margin: 20px;
+	margin-left: 50%;
+	float: left;
+}
+.quote-separator {
+	background-color: #EEEEEE;
+}
+
+.loaded > .icon-spinner,
+.loaded > .animate-spin {
+	display: none;
+}
+.loading > .icon-spinner,
+.loading > .animate-spin {
+	display: block;
+}
+.icon-spinner {
+	font-size: 64px;
+	margin: auto;
+    width: 90px;
+    margin-top: 20px;
+}
+
+.loading > .contents {
+	display: none;
 }

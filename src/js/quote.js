@@ -219,7 +219,7 @@ Quote.prototype = {
 	forJSON() {
 		return this.data;
 	},
-	forString() {
+	toString() {
 		var text = this.getText();
 		if (this.getAuthor()) {
 			text = text + ' (' + this.getAuthor() + ')'

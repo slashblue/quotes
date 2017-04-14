@@ -12,7 +12,7 @@
 QuotesDatabase.prototype = {
 	initialize: function(path) {
 		this._type = 'QuotesDatabase';
-		this.delaySave = 1 * 1000;
+		this.delaySave = 10 * 1000;
 		this._db = null;
 		this._path = path,
 		this._quotes = [];
@@ -39,7 +39,7 @@ QuotesDatabase.prototype = {
 	load: function() {
 		logger.log('info', 'QuotesDatabase.onLoad', { 'path': this._path });
 		if (this._path) {
-			this._db = low(this._path, { storage: require('lowdb/lib/file-async') });
+			this._db = low(this._path, { storage: require('lowdb/lib/storages/file-async') });
 			if (this._path && this._db && this._db.get) {
 				try {
 					if (this._onBeforeLoad) {
@@ -145,10 +145,10 @@ QuotesDatabase.prototype = {
 	trim: function() {
 		var self = this;
 		var changes = [];
-		for (i = 0; i < self.getQuotes().length; i++) {
-			var iQuote = self.getQuotes()[i];
-			for (j = 0; j < self.getQuotes().length; j++) {
-				var jQuote = self.getQuotes()[j];
+		for (i = 0; i < self._quotes.length; i++) {
+			var iQuote = self._quotes[i];
+			for (j = 0; j < self._quotes.length; j++) {
+				var jQuote = self._quotes[j];
 				if (i != j && iQuote && jQuote && iQuote.equals(jQuote)) {
 					logger.log('debug', 'QuotesDatabase.onTrim', { 'quote': jQuote, 'index': j });
 					changes.push(jQuote);
@@ -166,7 +166,7 @@ QuotesDatabase.prototype = {
 	},
 	eachQuote: function(callback) {
 		var self = this;
-		$(self.getQuotes()).each(function(index, each) {
+		$(self._quotes).each(function(index, each) {
 			callback(index, each);
 		});
 	},
@@ -252,15 +252,15 @@ QuotesDatabase.prototype = {
 		return !!this.matchingQuote(quote);
 	},
 	getQuotes: function() {
-		return this._quotes;
+		return this._quotes.slice();
 	},
 	getRequests: function() {
-		return this._requests;
+		return this._requests.slice();
 	},
 	getRandomQuote: function() {
-		return this.getQuotes()[Math.floor(this.size() * Math.random())];
+		return this._quotes[Math.floor(this.size() * Math.random())];
 	},
 	size: function() {
-		return this.getQuotes().length;
+		return this._quotes.length;
 	}
 }
