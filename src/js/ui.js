@@ -402,8 +402,18 @@ QuotesUI = {
 			ipc.on('import-quotes', function(event, arg) {
 				QuotesImporters.import(self.database, self.importers, arg, event);
 			});
+			ipc.on('export-quotes', function(event, arg) {
+				var exporter;
+				if (arg = 'csv') {
+					exporter = new QuotesExporterCSV();
+				}
+				if (exporter) {
+					event.sender.send('export-quotes', exporter.export(self.searcher.lastSearchResults || self.database.getQuotes()));
+				}
+			});
 		}
 		$("body").removeClass("loading").addClass("loaded");
+		this.player.ready();
 	},
 	tearDown: function(event) {
 		try {

@@ -17,6 +17,7 @@ QuotesSearcher.prototype = {
 		this._onEmptySearch = function(searchTerm, searchTerms, event) {};
 		this._onBeforeSearch = function(searchTerm, searchTerms, event) {};
 		this._onAfterSearch = function(results, searchTerm, searchTerms, event) {};
+		this.lastSearchResults = [];
 	},
 	setUp: function() {
 	},
@@ -28,7 +29,7 @@ QuotesSearcher.prototype = {
 		var self = this;
 		window.clearTimeout(self._timerSearch);
 		self._timerSearch = window.setTimeout(function() {
-			self._search(text, event);
+			self.lastSearchResults = self._search(text, event);
 		}, self.searchDelay);		
 	},
 	_search: function(searchTerm, event) {

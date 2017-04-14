@@ -59,11 +59,6 @@ QuotesPlayer.prototype = {
 		}
 	},
 	setUp: function() {
-		var currentQuote = this.nextQuote(0);
-		if (this._onReady) {
-			logger.log('debug', 'QuotesPlayer.onReady', { 'quote': currentQuote });
-			this._onReady(currentQuote, event);
-		}
 	},
 	tearDown: function() {
 		this.pause();
@@ -74,6 +69,13 @@ QuotesPlayer.prototype = {
 	},
 	isPlaying: function() {
 		return !!this._timerPlaying;
+	},
+	ready: function(event) {
+		var currentQuote = this.nextQuote(0);
+		if (this._onReady) {
+			logger.log('debug', 'QuotesPlayer.onReady', { 'quote': currentQuote });
+			this._onReady(currentQuote, event);
+		}
 	},
 	toggle: function(event) {
 		if (!this.isPlaying()) {

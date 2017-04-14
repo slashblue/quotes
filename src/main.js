@@ -44,7 +44,7 @@ function createLogger() {
           level: 'info'
         }))
     ]
-  });
+  })
 }
 
 function loadGlobals() {
@@ -78,9 +78,9 @@ function importFiles(filenames) {
 
 function pad(n, width, z) {
 
-  n = n + '';
-  width = width || 0;
-  z = z || '0';
+  n = n + ''
+  width = width || 0
+  z = z || '0'
   return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n
 
 }
@@ -103,7 +103,7 @@ function cleanupBackupsSync(baseDir) {
         if (err) {
           logger.log('error', 'cleanupBackupsSync', { path: baseDir + files[i], error: err })
         }
-      });
+      })
     }
 
   }) 
@@ -213,7 +213,7 @@ function toggleDevTools() {
     options.debug = true
     toggleWindow()
   } else {
-    options.debug = !options.debug;
+    options.debug = !options.debug
     if (options.debug) {
       mainWindow.webContents.openDevTools()
     } else {
@@ -237,7 +237,7 @@ function getWindowOptions () {
       options[key] = _options[key]
     }
   }
- return options;
+ return options
 }
 
 function createWindow () {
@@ -301,12 +301,17 @@ function createMenu() {
             })
           } 
         },
+        { label: 'Export to CSV ...', 
+          click(item, focusedWindow) { 
+            mainWindow.webContents.send('export-quotes', 'csv')
+          } 
+        },
         {
           type: 'separator'
         },
         { label: 'Copy Quote', 
           click(item, focusedWindow) { 
-            mainWindow.webContents.send('copy-quote');
+            mainWindow.webContents.send('copy-quote')
           } 
         },
         {
@@ -314,17 +319,17 @@ function createMenu() {
         },
         { label: 'Toggle Play/Pause', 
           click(item, focusedWindow) { 
-            mainWindow.webContents.send('player-toggle');
+            mainWindow.webContents.send('player-toggle')
           } 
         },
         { label: 'Next', 
           click(item, focusedWindow) { 
-            mainWindow.webContents.send('player-next');
+            mainWindow.webContents.send('player-next')
           } 
         },
         { label: 'Previous', 
           click(item, focusedWindow) { 
-            mainWindow.webContents.send('player-previous');
+            mainWindow.webContents.send('player-previous')
           } 
         },
         {
@@ -332,17 +337,17 @@ function createMenu() {
         },
         { label: 'Faster', 
           click(item, focusedWindow) { 
-            mainWindow.webContents.send('player-faster');
+            mainWindow.webContents.send('player-faster')
           } 
         },
         { label: 'Slower', 
           click(item, focusedWindow) { 
-            mainWindow.webContents.send('player-slower');
+            mainWindow.webContents.send('player-slower')
           } 
         },
         { label: 'Reset Defaults', 
           click(item, focusedWindow) { 
-            mainWindow.webContents.send('player-reset');
+            mainWindow.webContents.send('player-reset')
           } 
         },
         {
@@ -351,7 +356,7 @@ function createMenu() {
         { label: 'Quit', 
           accelerator: 'Command+Q',
           click() { 
-            app.quit(); 
+            app.quit()
           } 
         }
       ]
@@ -461,7 +466,21 @@ app.on('activate', function () {
 })
 
 electron.ipcMain.on('copy-quote', function(event, arg) {
-  electron.clipboard.writeText(arg);
+  electron.clipboard.writeText(arg)
+})
+
+electron.ipcMain.on('export-quotes', function(event, arg) {
+  if (arg) {
+    electron.dialog.showSaveDialog(function(filename) {
+        if (filename === undefined){
+        return
+      }
+      fs.writeFile(filename, arg, function(err) {
+        if(err){
+        }
+      })
+    })
+  }
 })
 
 electron.ipcMain.on('player-options', function(event, arg) {
