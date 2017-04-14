@@ -1,8 +1,4 @@
-/*
- * @requires database.js
- */
-
- QuotesPlayer = function(options) {
+QuotesPlayer = function(options) {
 	this.initialize(options);
 	this.initializeLocalStorage();
 	return this;
@@ -95,7 +91,6 @@ QuotesPlayer.prototype = {
 		}
 	},
 	resume: function(event) {
-		this._timerPlaying = true;
 		this.nextDelayed(event);
 		if (this._onResume) {
 			logger.log('debug', 'QuotesPlayer.onResume');
@@ -103,7 +98,6 @@ QuotesPlayer.prototype = {
 		}
 	},
 	suspend: function(event) {
-		this._timerPlaying = false;
 		window.clearInterval(this._timerPlayer);
 		window.clearTimeout(self._timerRestart);
 		if (this._onSuspend) {
@@ -132,7 +126,6 @@ QuotesPlayer.prototype = {
 	},
 	nextDelayed: function(event) {
 		var self = this;
-		self._timerPlaying = true;
 		window.clearInterval(self._timerPlayer);
 		self._timerPlayer = window.setInterval(function() {
 			self._timerTimestamp = $.timestamp();

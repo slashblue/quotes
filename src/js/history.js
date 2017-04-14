@@ -1,5 +1,5 @@
 /*
- * @requires database.js
+ * @requires quote.js
  */
 
 QuotesHistory = function() {

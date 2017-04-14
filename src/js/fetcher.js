@@ -1,6 +1,6 @@
 /*
- * @requires database.js
  * @requires request.js
+ * @requires quote.js
  */
  QuotesFetcher = function(requests) {
 	this.initialize(requests);

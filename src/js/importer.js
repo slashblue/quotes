@@ -1,8 +1,3 @@
-/*
- * @requires database.js
- * @requires quote.js
- */
- 
 QuotesImporters = {
 	import: function(database, importers, response, event) {
 		if (database && response) {

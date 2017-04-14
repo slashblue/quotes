@@ -1,5 +1,5 @@
 /*
- * @requires database.js
+ * @requires quote.js
  */
 
  QuotesSearcher = function() {
@@ -41,7 +41,7 @@ QuotesSearcher.prototype = {
 				logger.log('debug', 'QuotesSearcher.onBeforeSearch', { 'searchTerm': searchTerm, 'searchTerms': searchTerms });
 				self._onBeforeSearch(searchTerm, searchTerms, event);
 			}
-			searchResults = self.searchForTerms(searchTerms, function(quote) {
+			searchResults = self._searchForTerms(searchTerms, function(quote) {
 				if (self._onSearch) {
 					logger.log('debug', 'QuotesSearcher.onSearch', { 'searchTerm': searchTerm, 'searchTerms': searchTerms, 'quote': quote });
 					self._onSearch(quote, searchTerm, searchTerms, event);
@@ -93,7 +93,7 @@ QuotesSearcher.prototype = {
 	onBeforeSearch: function(callback) {
 		this._onBeforeSearch = callback;
 	},
-	searchForTerms: function(searchTerms, callback) {
+	_searchForTerms: function(searchTerms, callback) {
 		var self = this;
 		var results = [];
 		if (searchTerms && searchTerms.length > 0) {

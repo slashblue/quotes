@@ -43,12 +43,6 @@ QuotesUI = {
 		self.player.onPause(function(event) {
 			$('#tab-play').removeClass('tab-playing');
 		});
-		self.player.onResume(function(event) {
-			$('#tab-play').addClass('tab-resuming');
-		});
-		self.player.onSuspend(function(event) {
-			$('#tab-play').removeClass('tab-resuming');
-		});
 		self.player.onNext(function(nextQuote, previousQuote, event) {
 			self.replaceQuote(nextQuote, $('#quote'));
 		});
@@ -59,9 +53,7 @@ QuotesUI = {
 			return self.database.getRandomQuote();
 		});
 		self.player.onReady(function(nextQuote, event){
-			if ($('#quote').is(':visible')) {
-				self.player.play(event);
-			}
+			self.player.play(event);
 		});
 		self.player.setUp();
 	},
@@ -88,7 +80,7 @@ QuotesUI = {
 			self.setupHistory();
 			self.setupImporters();
 			self.setUpControl();
-			self.setupMainWindow();
+			self.setupElectron();
 		});
 		self.database.setUp();
 	},
@@ -311,7 +303,7 @@ QuotesUI = {
 		$('.tab').on('click.quotes', function(event) {
 			var tab = $(this);
 			if (tab.hasClass('tab-active')) {
-				if (!QuotesEditors.isEditing()) {
+				if (tab.attr('id') == 'tab-play') {
 					self.player.toggle(event);
 				}
 			} else {
@@ -319,9 +311,14 @@ QuotesUI = {
 				$('.tab-content').removeClass('tab-content-active');
 				tab.addClass('tab-active');
 				$(tab.attr('href')).addClass('tab-content-active');
-				self.player.suspend(event);
+				if (tab.attr('id') == 'tab-play') {
+					self.player.resume(event);
+				} else {
+					self.player.suspend(event);
+				}
+				
 			}
-		});		
+		});
 		$('#nextQuote').on('click.quotes', function(event) {
 			if (!QuotesEditors.isDirty()) {
 				QuotesEditors.abort();
@@ -371,7 +368,7 @@ QuotesUI = {
 			self.history.showMore();
 		});
 	},
-	setupMainWindow: function() {
+	setupElectron: function() {
 		var self = this;
 		if (window && window.electron && window.electron.ipcRenderer) {
 			var ipc = window.electron.ipcRenderer;
@@ -506,12 +503,19 @@ QuotesUI = {
 			return true;
 		});
 		editor.onChange(function(event) {
-			self.player.suspend(event);
+			if (self.isTabPlayActive()) {
+				self.player.suspend(event);
+			}
 		});
 		editor.onFocus(function(event) {
-			self.player.suspend(event);
+			if (self.isTabPlayActive()) {
+				self.player.suspend(event);
+			}
 		});
 		editor.onCancel(function(event) {
+			if (self.isTabPlayActive()) {
+				self.player.resume(event);
+			}
 		});
 		editor.attach();
 	},
@@ -523,6 +527,9 @@ QuotesUI = {
 			text = this.database.size() + ' quotes available';
 		}
 		$('#stats').empty().text(text);
+	},
+	isTabPlayActive: function() {
+		return $('#tab-play.tab-active').get(0);
 	}
 };
 
