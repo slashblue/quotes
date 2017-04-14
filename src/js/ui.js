@@ -350,37 +350,66 @@ QuotesUI = {
 				}
 			}
 		});
+		// TODO >>>>>>>>>>>>>
+		// exclusive filter
+		// multiselect
+		// state back
+		var filters = new QuoteFilters();
 		$('#searchText').on('keyup.quotes', function(event) {
 			if (!QuotesEditors.isDirty()) {
 				QuotesEditors.abort();
-				var searchFilters = [];
-				searchFilters.push(new QuotesFilterFullText($('#searchText').val(), 3));
-				self.searcher.search(searchFilters, event);
+				filters.addFilter(new QuotesFilterFullText($('#searchText').val(), 3));
+				self.searcher.search(filters.getFilters(), event);
 			} else {
 				QuotesEditors.highlight();
 			}
 		});
-		//var keywordCloud = $('#searchKeywords');
-		//var container = $('<div>');
-		//$($.shuffle(Quotes.getKeywords(self.database.getQuotes(), 50, 6, 60))).each(function(index, each) {
-		//	$('<span class="keyword" style="font-size:' + each[2] +'px">' + each[0] + '</span>').appendTo(container);
-		//});
-		//var keywordCloud = $('#searchLanguages');
-		//var container = $('<div>');
-		//$(Quotes.getLanguages(self.database.getQuotes())).each(function(index, each) {
-		//	var id = "lang" + index;
-		//	var node = $('<input type="checkbox" id="' + id + '"></input><label for="' + id + '">' + each + '</label>');
-		//	var filter = new QuotesFilterLanguage(each);
-		//	node.on('change', function(event) {
-		//		if (node.is(':checked')) {
-		//			console.log('check');
-		//		} else {
-		//			console.log('uncheck');
-		//		}
-		//	});
-		//	node.appendTo(container);
-		//});
-		//container.appendTo(searchLanguages);
+		var searchKeywords = $('#searchKeywords');
+		var container = $('<div>');
+		$($.shuffle(Quotes.getKeywords(self.database.getQuotes(), 10, 6, 60))).each(function(index, each) {
+			var id = "key" + index;
+			var node = $('<div class="keyword">');
+			var input = $('<input type="checkbox" id="' + id + '"></input>');
+			var label = $('<label for="' + id + '">' + each[0] + '</label>');
+			var filter = new QuotesFilterKeyword(each[0]);
+			input.on('change', function(event) {
+				if (input.is(':checked')) {
+					filters.addFilter(filter);
+				} else {
+					filters.removeFilter(filter);
+				}
+				filters.addFilter(new QuotesFilterFullText($('#searchText').val(), 3));
+				self.searcher.search(filters.getFilters(), event);
+			});
+			node.append(input).append(label).appendTo(container);
+		});
+		container.appendTo(searchKeywords);
+		var searchLanguages = $('#searchLanguages');
+		var container = $('<div>');
+		$(Quotes.getLanguages(self.database.getQuotes())).each(function(index, each) {
+			var id = "lang" + index;
+			var node = $('<div class="language">');
+			var input = $('<input type="checkbox" id="' + id + '"></input>');
+			var label = $('<label for="' + id + '">' + each + '</label>');
+			var filter = new QuotesFilterLanguage(each);
+			input.on('change', function(event) {
+				searchLanguages.find("input").each(function(index, each) {
+					if (each !== input[0]) {
+						each.checked = false;
+					}
+				}); 
+				if (input.is(':checked')) {
+					filters.addFilter(filter);
+				} else {
+					filters.removeFilter(filter);
+				}
+				filters.addFilter(new QuotesFilterFullText($('#searchText').val(), 3));
+				self.searcher.search(filters.getFilters(), event);
+			});
+			node.append(input).append(label).appendTo(container);
+		});
+		container.appendTo(searchLanguages);
+		// <<<<<<<<<<<<<<<< TODO
 		$('#tab-search').on('click.quotes', function(event) {
 			$('#searchText').focus();
 		});

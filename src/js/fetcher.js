@@ -9,7 +9,7 @@
 QuotesFetcher.prototype = {
 	initialize: function(requests) {
 		this._type = 'QuotesFetcher';
-		this._delayStart = 250;
+		this._delayStart = 10 * 10000; // ms
 		this._delayInterval = 5 * 60 * 1000; // every 5 minutes
 		this._specs = [];
 		this._requests = (requests || []).slice();

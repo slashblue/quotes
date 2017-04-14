@@ -1,6 +1,29 @@
-
+QuoteFilters = function() {
+	this.initialize();
+	return this;
+};
+QuoteFilters.prototype = {
+	initialize: function() {
+		this.filters = [];
+	},
+	addFilter: function(filter) {
+		if (filter) {
+			this.filters = $.grep(this.filters, function(each) { return each.id != filter.id });
+			this.filters.push(filter);
+		}
+	},
+	removeFilter: function(filter) {
+		if (filter) {
+			this.filters = $.grep(this.filters, function(each) { return each !== filter });
+		}
+	},
+	getFilters: function() {
+		return this.filters;
+	}
+};
 
 QuotesFilterDefault = function() {
+	this.id = 'Default';
 	return this;
 };
 QuotesFilterDefault.prototype = {
@@ -19,10 +42,11 @@ QuotesFilterLanguage = function(language) {
 QuotesFilterLanguage.prototype = {};
 $.extend(QuotesFilterLanguage.prototype, QuotesFilterDefault.prototype, {
 	initialize: function(language) {
+		this.id = 'Language';
 		this.language = language;
 	},
 	canMatch: function() {
-		return this.language && language.length > 0;
+		return this.language && this.language.length > 0;
 	},
 	isMatch: function(quote) {
 		return quote.matchesLanguage(this.language);
@@ -36,6 +60,7 @@ QuotesFilterKeyword = function(keyword) {
 QuotesFilterKeyword.prototype = {};
 $.extend(QuotesFilterKeyword.prototype, QuotesFilterDefault.prototype, {
 	initialize: function(keyword) {
+		this.id = keyword;
 		this.keyword = keyword;
 	},
 	canMatch: function() {
@@ -54,6 +79,7 @@ QuotesFilterFullText = function(searchTerm, minLength) {
 QuotesFilterFullText.prototype = {};
 $.extend(QuotesFilterFullText.prototype, QuotesFilterDefault.prototype, {
 	initialize: function(searchTerm, minLength) {
+		this.id = 'FullText';
 		this.searchTerm = searchTerm;
 		this.searchTerms = this._searchTerms(searchTerm);
 		this.minLength = minLength || 3;

@@ -262,7 +262,7 @@ Quote.prototype = {
 		return false;
 	},
 	matchesLanguage: function(language) {
-		this.getLanguage() == language;
+		return this.getLanguage() == language;
 	},
 	matchesKeyword: function(keyword) {
 		return $.anySatisfy(this.getKeywords(), function(index, each) { return each == keyword; });

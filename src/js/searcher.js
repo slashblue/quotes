@@ -25,11 +25,11 @@ QuotesSearcher.prototype = {
 		window.clearTimeout(this._timerSearch);
 		this.initialize();
 	},
-	search: function(text, event) {
+	search: function(rawSearchFilters, event) {
 		var self = this;
 		window.clearTimeout(self._timerSearch);
 		self._timerSearch = window.setTimeout(function() {
-			self.lastSearchResults = self._search(text, event);
+			self.lastSearchResults = self._search(rawSearchFilters, event);
 		}, self.searchDelay);		
 	},
 	_search: function(rawSearchFilters, event) {
@@ -78,15 +78,18 @@ QuotesSearcher.prototype = {
 		return searchResults;
 	},
 	_searchFilters: function(rawSearchFilters) {
+		var search = true;
 		var searchFilters = [];
 		if (rawSearchFilters) {
 			$(rawSearchFilters).each(function(index, each) {
 				if (each.canMatch()) {
 					searchFilters.push(each);
+				} else {
+					search = false;
 				}
 			})
 		}
-		return searchFilters;
+		return search ? searchFilters : [];
 	},
 	onEach: function(callback) {
 		this._onEach = callback;
@@ -106,13 +109,11 @@ QuotesSearcher.prototype = {
 	_searchWithFilters: function(searchFilters, callback) {
 		var self = this;
 		var results = [];
-		if (self._onEach) {
+		if (self._onEach && callback) {
 			self._onEach(function(index, quote) {
 				if (self._matchesSearchFilters(searchFilters, quote)) {
-					if (callback) {
-						results.push(quote);
-						callback(quote);
-					}
+					results.push(quote);
+					callback(quote);
 				}
 			});
 		} 

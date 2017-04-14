@@ -335,28 +335,31 @@ body {
 	display: none;
 }
 
-#searchLanguages input {
-	display: none;
-}
-#searchLanguages label {
-	float: left;
-	padding: 4px 10px 4px 10px;
-	margin: 4px;
-}
-
-#searchLanguages input:checked ~ label {
-	background-color: #EEEEEE;
-}
-
+#searchLanguages,
 #searchKeywords {
 	float: left;
 	width: 100%;
 }
-#searchKeywords .keyword {
+
+.language input,
+.keyword input {
+	display: none;
+}
+
+.language > label,
+.keyword > label {
 	float: left;
 	padding: 4px 10px 4px 10px;
 	margin: 4px;
+	border-radius: 20px;
 }
-#searchKeywords .keyword:hover {
+
+.language:hover > label,
+.keyword:hover > label {
+	background-color: #EEEEEE;
+}
+
+.language > input:checked ~ label,
+.keyword > input:checked ~ label {
 	background-color: #EEEEEE;
 }
