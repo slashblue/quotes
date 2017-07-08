@@ -21,17 +21,13 @@
     "css/*.css"
   ],
   "devDependencies": {
-    "electron": "^1.6.2",
     "electron-debug": "^1.1.0",
-    "electron-packager": "^8.6.0",
-    "electron-prebuilt": "^1.4.13"
+    "electron-packager": "^8.6.0"
   },
   "dependencies": {
     "appdirectory": "^0.1.0",
-    "electron": "^1.6.2",
-    "electron-debug": "^1.1.0",
+    "electron": "^1.6.11",
     "electron-json-storage": "^3.0.4",
-    "electron-packager": "^8.6.0",
     "electron-prebuilt": "^1.4.13",
     "jquery": "^3.2.1",
     "jquery-ui": "^1.12.1",

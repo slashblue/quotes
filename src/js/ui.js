@@ -318,6 +318,7 @@ QuotesUI = {
 				}
 				
 			}
+			return false;
 		});
 		$('#nextQuote').on('click.quotes', function(event) {
 			if (!QuotesEditors.isDirty()) {
@@ -366,7 +367,7 @@ QuotesUI = {
 		});
 		var searchKeywords = $('#searchKeywords');
 		var container = $('<div>');
-		$($.shuffle(Quotes.getKeywords(self.database.getQuotes(), 10, 6, 60))).each(function(index, each) {
+		$($.shuffle(Quotes.getKeywords(self.database.getQuotes(), 15, 6, 60))).each(function(index, each) {
 			var id = "key" + index;
 			var node = $('<div class="keyword">');
 			var input = $('<input type="checkbox" id="' + id + '"></input>');

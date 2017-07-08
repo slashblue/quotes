@@ -6,27 +6,31 @@
         <link rel="stylesheet" href="./css/styles.css">
         <link rel="stylesheet" href="./css/fontello.css">
         <link rel="stylesheet" href="./css/animation.css">
-	<title>Quotes</title>
+	    <title>Quotes</title>
     </head>
 
     <body class="loading">
         <i class="icon-spinner animate-spin"></i>
         <div class="contents">
-            <ul id="tabs">
-                <li>
+            <div id="tabs">
+                <div class="tab-navi">
                     <a href="#tab-content-1" id="tab-play" class="tab tab-active tab-playing">
                         <i class="icon-play"></i><i class="icon-pause"></i>Play
                     </a>
-                </li>
-                <li><a href="#tab-content-2" id="tab-search" class="tab icon-search">Search</a></li>
-                <li><a href="#tab-content-3" id="tab-history" class="tab icon-history">History</a></li>
-            </ul>
+                </div>
+                <div class="tab-navi">
+                    <a href="#tab-content-2" id="tab-search" class="tab icon-search">Search</a>
+                </div>
+                <div class="tab-navi">
+                    <a href="#tab-content-3" id="tab-history" class="tab icon-history">History</a>
+                </div>
+            </div>
             <div id="tab-content-1" class="tab-content tab-content-play tab-content-active">
-                <div class="nav">
+                <div id="quote"></div>
+                <div class="nav-quote">
                     <a id="previousQuote" class="icon-left-open"></a>
                     <a id="nextQuote" class="icon-right-open"></a>
                 </div>
-                <div id="quote"></div>
             </div>
             <div id="tab-content-2" class="tab-content tab-content-search">
                 <form id="search" default="return false;">
