@@ -264,9 +264,11 @@ QuotesUI = {
 		});
 		self.searcher.onEmptySearch(function(searchTerm, searchTerms, event){
 			self.updateStats([]);
+			self.updateKeywords([]);
 		});
 		self.searcher.onAfterSearch(function(quotes, searchTerm, searchTerms, event){
 			self.updateStats(quotes);
+			self.updateKeywords(quotes);
 		});
 		self.searcher.setUp();
 	},
@@ -369,7 +371,7 @@ QuotesUI = {
 		var container = $('<div>');
 		$($.shuffle(Quotes.getKeywords(self.database.getQuotes(), 15, 6, 60))).each(function(index, each) {
 			var id = "key" + index;
-			var node = $('<div class="keyword">');
+			var node = $('<div class="keyword" data-keyword="' + each[0] + '">');
 			var input = $('<input type="checkbox" id="' + id + '"></input>');
 			var label = $('<label for="' + id + '">' + each[0] + '</label>');
 			var filter = new QuotesFilterKeyword(each[0]);
@@ -580,6 +582,27 @@ QuotesUI = {
 			text = this.database.size() + ' quotes available';
 		}
 		$('#stats').empty().text(text);
+	},
+	updateKeywords: function(results) {
+		$('#searchKeywords .keyword').each(function(index, each) {
+			$(each).removeClass('faded');
+		});
+		if (results && results.length > 0) {
+			var keywords = [];
+			$(results).each(function(index, each) {
+				each.eachKeyword(function(index, keyword) {
+					keywords.push(keyword);
+				});	
+			});
+			keywords = $.unique(keywords);
+			$('#searchKeywords .keyword').each(function(index, each) {
+				var jqNode = $(each);
+				var keyword = jqNode.data('keyword');
+				if (!!keyword && keywords.indexOf(keyword) < 0) {
+					jqNode.addClass('faded');
+				}				
+			});
+		}
 	},
 	isTabPlayActive: function() {
 		return $('#tab-play.tab-active').get(0);

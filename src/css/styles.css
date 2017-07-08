@@ -356,6 +356,14 @@ body {
 	background-color: #97e470;
 }
 
+.faded {
+	opacity: 0.25;
+}
+
+.faded:hover > label {
+	background-color: none !important;
+}
+
 #stats {
 	float: left;
 	width: 100%;
