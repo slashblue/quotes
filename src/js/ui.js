@@ -16,9 +16,10 @@ QuotesUI = {
 	history: null,
 	setUp: function(event) {
 		try {
-			logger.log('info', 'QuotesUI.setUp');
+			logger.log('info', 'QuotesUI.setUp start');
 			this.setUpDocument();
 			this.setUpDatabase();
+			logger.log('info', 'QuotesUI.setUp end');
 		} catch (error) {
 			logger.log('error', 'QuotesUI.setUp', { 'error': error });
 		}

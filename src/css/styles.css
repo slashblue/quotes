@@ -134,7 +134,7 @@ body {
 
 .controls {
 	position: absolute;
-	top: -50px;
+	top: -60px;
 	padding: 20px;
 	right: 10px;
 	display: none;
@@ -371,6 +371,9 @@ body {
 
 /* tab 3 contents */
 
+.quote-separator {
+	background-color: #f0f0f0;
+}
 .quote.quote-separator:hover {
 	background-color: none;
 }
@@ -395,7 +398,8 @@ body {
 
 .desktop .nav,
 .desktop .tab,
-.desktop .tab-content-search {
+.desktop .tab-content-search,
+.desktop .nav-quote {
 	visibility: hidden !important;
 }
 
@@ -404,7 +408,7 @@ body {
 }
 
 .desktop #quote {
-	background-color: rgba(255,255,255,0.2);
+	background-color: rgba(255,255,255,0.5);
 	border-radius: 20px;
 }
 

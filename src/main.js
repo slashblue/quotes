@@ -185,7 +185,7 @@ function toggleWindow() {
     delete options.window.transparent
     delete options.window.type
   }
-  
+
   saveOptionsDelayed()
   
   reopenWindow()
@@ -224,20 +224,21 @@ function toggleDevTools() {
 }
 
 function getWindowOptions () {
-  var options = {}
+  var windowOptions = {}
   var _globalOptions = globalOptions.window || defaultOptions.window || {}
   var _options = options.window || defaultOptions.window || {}
   for (key in _globalOptions) {
     if (_globalOptions.hasOwnProperty(key)) {
-      options[key] = _globalOptions[key]
+      windowOptions[key] = _globalOptions[key]
     }
   }
   for (key in _options) {
     if (_options.hasOwnProperty(key)) {
-      options[key] = _options[key]
+      windowOptions[key] = _options[key]
     }
   }
- return options
+  console.log(windowOptions);
+ return windowOptions
 }
 
 function createWindow () {

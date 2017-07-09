@@ -47,13 +47,17 @@ QuotesDatabase.prototype = {
 						this._onBeforeLoad();
 					}		
 					try {
+						logger.log('info', 'QuotesDatabase.load start');
 						this._load();
 						if (this._quotes.length == 0) {
+							logger.log('info', 'QuotesDatabase.load.new start');
 							this.new();
 						} else {
+							logger.log('info', 'QuotesDatabase.load.migrate start');
 							this.migrate();
 							this.trim();
 						}
+						logger.log('info', 'QuotesDatabase.load end');
 					} catch (error) {
 						logger.log('error', 'QuotesDatabase.onLoadError', { 'error': error, 'path': this._path });
 						if (this._onLoadError) {
@@ -127,42 +131,43 @@ QuotesDatabase.prototype = {
 		this._onWriteRequests = callback; 
 	},
 	migrate: function() {
-		var self = this;
-		var changes = [];
-		self.eachQuote(function(index, quote) {
-			logger.log('debug', 'QuotesDatabase.onMigrate', { 'quote': quote, 'index': index });
-			if (quote.migrate()) {
-				changes.push(quote);
-			}
-		});
-		
-		if (changes && changes.length > 0) {
-			logger.log('info', 'QuotesDatabase.onMigrate', { 'changes': changes });
-			self.changed({ 'migrate': changes });
-			self.save(null, null);
-		}
+		// TODO this is super expensive !!! (+5sec at startup) -> separate maint operation
+		// var self = this;
+		// var changes = [];
+		// self.eachQuote(function(index, quote) {
+		// 	logger.log('debug', 'QuotesDatabase.onMigrate', { 'quote': quote, 'index': index });
+		// 	if (quote.migrate()) {
+		// 		changes.push(quote);
+		// 	}
+		// });
+		// if (changes && changes.length > 0) {
+		// 	logger.log('info', 'QuotesDatabase.onMigrate', { 'changes': changes });
+		// 	self.changed({ 'migrate': changes });
+		// 	self.save(null, null);
+		// }
 	},
 	trim: function() {
-		var self = this;
-		var changes = [];
-		for (i = 0; i < self._quotes.length; i++) {
-			var iQuote = self._quotes[i];
-			for (j = 0; j < self._quotes.length; j++) {
-				var jQuote = self._quotes[j];
-				if (i != j && iQuote && jQuote && iQuote.equals(jQuote)) {
-					logger.log('debug', 'QuotesDatabase.onTrim', { 'quote': jQuote, 'index': j });
-					changes.push(jQuote);
-				}
-			}
-		}
-		for (k = 0; k < changes.length; k++) {
-			self.removeQuote(changes[k]);
-		}
-		if (changes && changes.length > 0) {
-			logger.log('info', 'QuotesDatabase.onTrim', { 'changes': changes });
-			self.changed({ 'trim': changes });
-			self.save(null, null);
-		}
+		// TODO this is super expensive !!! (+5sec at startup) -> separate maint operation
+		// var self = this;
+		// var changes = [];
+		// for (i = 0; i < self._quotes.length; i++) {
+		// 	var iQuote = self._quotes[i];
+		// 	for (j = 0; j < self._quotes.length; j++) {
+		// 		var jQuote = self._quotes[j];
+		// 		if (i != j && iQuote && jQuote && iQuote.equals(jQuote)) {
+		// 			logger.log('debug', 'QuotesDatabase.onTrim', { 'quote': jQuote, 'index': j });
+		// 			changes.push(jQuote);
+		// 		}
+		// 	}
+		// }
+		// for (k = 0; k < changes.length; k++) {
+		// 	self.removeQuote(changes[k]);
+		// }
+		// if (changes && changes.length > 0) {
+		// 	logger.log('info', 'QuotesDatabase.onTrim', { 'changes': changes });
+		// 	self.changed({ 'trim': changes });
+		// 	self.save(null, null);
+		// }
 	},
 	eachQuote: function(callback) {
 		var self = this;
